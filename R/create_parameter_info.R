@@ -121,7 +121,7 @@ create_parameter_info <- function(
   # Standardize link functions
   if (is.null(link_functions)) {
     link_functions <- rep(list('identity'), n_params)
-  } else if (is.character(link_functions)) {
+  } else if (is.character(link_functions) && is.null(names(link_functions))) {
     link_functions <- bstatUtils::assign_list_circular(link_functions, n_params, param_names)
   } else {
     link_functions <- as.list(link_functions)

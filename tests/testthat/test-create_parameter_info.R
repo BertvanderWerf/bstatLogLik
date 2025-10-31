@@ -58,6 +58,7 @@ test_that("create_parameter_info sets estimate_flag", {
     parameter_values = c(k = 2, lambda = 10, c = 0),
     estimate_flag = c(k = 1, lambda = 1, c = 0),
     formulas = list(k = ~0+Capital, lambda = ~1, c = ~Capital*Lower),
+    link = c(lambda = 'log'),
     model_data = df
   )
   expect_equal(param_info$estimate_flag$k[1], 1)
