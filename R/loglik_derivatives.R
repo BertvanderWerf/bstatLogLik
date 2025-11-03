@@ -68,8 +68,7 @@ compute_hessian <- function(deriv_output, gradient, parameter_info, cond_vec, np
     }
 
     # Build nested list structure for Hessian blocks
-    hess_list <- matrix(list(), nrow = sum(cond_vec), ncol = sum(cond_vec),
-                        dimnames = list(parnames_selected, parnames_selected))
+    hess_list <- matrix(list(), nrow = sum(cond_vec), ncol = sum(cond_vec))
 
     k <- 0
     for (j in seq_len(npars)) {
@@ -81,20 +80,20 @@ compute_hessian <- function(deriv_output, gradient, parameter_info, cond_vec, np
           cond_i <- parameter_info$estimate_flag[[i]]
           cond_j <- parameter_info$estimate_flag[[j]]
 
-          if (is.null(mat_i) && is.null(mat_j)) {
-            # Both parameters are scalars
-            hess_list[[k]] <- sum(d2[, k, drop = FALSE])
-            dim(hess_list[[k]]) <- c(1, 1)
-
-          } else if (is.null(mat_i)) {
-            # i is scalar, j has design matrix
-            hess_list[[k]] <- t(colSums(d2[, k] * mat_j[, cond_j == TRUE, drop = FALSE]))
-
-          } else if (is.null(mat_j)) {
-            # i has design matrix, j is scalar
-            hess_list[[k]] <- t(t(colSums(d2[, k] * mat_i[, cond_i == TRUE, drop = FALSE])))
-
-          } else {
+          # if (is.null(mat_i) && is.null(mat_j)) {
+          #   # Both parameters are scalars
+          #   hess_list[[k]] <- sum(d2[, k, drop = FALSE])
+          #   dim(hess_list[[k]]) <- c(1, 1)
+          #
+          # } else if (is.null(mat_i)) {
+          #   # i is scalar, j has design matrix
+          #   hess_list[[k]] <- t(colSums(d2[, k] * mat_j[, cond_j == TRUE, drop = FALSE]))
+          #
+          # } else if (is.null(mat_j)) {
+          #   # i has design matrix, j is scalar
+          #   hess_list[[k]] <- t(t(colSums(d2[, k] * mat_i[, cond_i == TRUE, drop = FALSE])))
+          #
+          # } else {
             # Both have design matrices
             n_i <- sum(cond_i)
             n_j <- sum(cond_j)
@@ -112,7 +111,7 @@ compute_hessian <- function(deriv_output, gradient, parameter_info, cond_vec, np
               }
             }
             hess_list[[k]] <- h_block
-          }
+          # }
         }
       }
     }

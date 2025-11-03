@@ -3,27 +3,32 @@
 #' Returns the matrix of score contributions (one row per observation).
 #'
 #' @param object Object of class "loglik".
+#' @param ... Additional arguments (currently unused).
 #' @return Matrix of score contributions.
 #' @export
-estfun <- function(object) {
+estfun<- function(object, ...) {
   UseMethod("estfun")
 }
 
 #' @export
-estfun.loglik <- function(object) {
-  # Return the stored gradient matrix from the fitted model
+estfun.loglik <- function(object, ...) {
   object$gradient_matrix
 }
-
 
 #' Compute Meat Matrix for Sandwich Estimator
 #'
 #' Calculates the "meat" component: sum of outer products of scores.
 #'
 #' @param object Object of class "loglik".
+#' @param ... Additional arguments (currently unused).
 #' @return Meat matrix.
 #' @export
-meat.loglik <- function(object) {
+meat <- function(object, ...) {
+  UseMethod("meat")
+}
+
+#' @export
+meat.loglik <- function(object, ...) {
   scores <- estfun.loglik(object)
   crossprod(scores)
 }
@@ -34,12 +39,17 @@ meat.loglik <- function(object) {
 #' Returns the "bread" component: negative of the Hessian.
 #'
 #' @param object Object of class "loglik".
+#' @param ... Additional arguments (currently unused).
 #' @return Bread matrix.
 #' @export
-bread.loglik <- function(object) {
-  -object$hessian
+bread <- function(object, ...) {
+  UseMethod("bread")
 }
 
+#' @export
+bread.loglik <- function(object, ...) {
+  -object$hessian
+}
 
 #' Robust Sandwich Variance-Covariance Matrix
 #'
@@ -48,7 +58,12 @@ bread.loglik <- function(object) {
 #' @param object Object of class "loglik".
 #' @return Sandwich variance-covariance matrix.
 #' @export
-vcov_sandwich.loglik <- function(object) {
+sandwich <- function(object, ...) {
+  UseMethod("sandwich")
+}
+
+#' @export
+sandwich.loglik <- function(object) {
   bread <- bread.loglik(object)
   meat <- meat.loglik(object)
 

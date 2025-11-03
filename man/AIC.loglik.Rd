@@ -2,20 +2,28 @@
 % Please edit documentation in R/loglik_methods.R
 \name{AIC.loglik}
 \alias{AIC.loglik}
-\title{Extract AIC from loglik Object}
+\title{Extract AIC or AICc from loglik Object}
 \usage{
-\method{AIC}{loglik}(object, ..., k = 2)
+\method{AIC}{loglik}(object, corrected = TRUE, ..., k = 2)
 }
 \arguments{
 \item{object}{An object of class \code{loglik}.}
+
+\item{corrected}{Logical; if TRUE return value is the corrected AICc value, if FALSE AIC.}
 
 \item{...}{Additional arguments (unused).}
 
 \item{k}{Numeric, penalty per parameter (default 2 for AIC).}
 }
 \value{
-Numeric, AIC value.
+Numeric, AIC or AICc value, depending on value of corrected.
 }
 \description{
-Extract AIC from loglik Object
+Generally use of AICc when the ratio number_of_observations/number_of_parameters_estimated
+is small (say < 40). See Burnham & Anderson (2002), page 66.
+}
+\references{
+Burnham, K.P. and Anderson, D.R. (2002) Model selection and multimodel inference:
+a practical information-theoretic approach. 2nd ed. Springer-Verlag, New York.
+DOI: 10.1007/b97636
 }

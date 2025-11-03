@@ -13,7 +13,7 @@ evaluate_function <- function(
     fun,
     vars = NULL,
     parameter_info,
-    data
+    data=NULL
 ) {
   # Error and type checks for robustness
   bstatErr::check_function(fun)
@@ -26,6 +26,9 @@ evaluate_function <- function(
       stop("Both 'data' and 'parameter_info$model_data' cannot be NULL.", call. = FALSE)
     }
     data <- parameter_info$model_data
+  } else {
+    # Recreate parameter_info with data if needed
+    parameter_info <- create_parameter_info(parameter_info, model_data = data)
   }
   bstatErr::check_string_vector(vars, allow_null = TRUE, must_have_names = TRUE)
 
@@ -39,8 +42,6 @@ evaluate_function <- function(
     vars <- character(0)
   }
 
-  # Recreate parameter_info with data if needed
-  parameter_info <- create_parameter_info(parameter_info, model_data = data)
   param_names <- names(parameter_info$parameter_values)
   n_params <- length(param_names)
 

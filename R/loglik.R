@@ -31,7 +31,7 @@
 #' @aliases loglik-class loglik_fit-class
 #' @docType class
 #'
-#' @seealso \code{\link{loglik}}, \code{\link{estfun.loglik}}, \code{\link{vcov_sandwich.loglik}}
+#' @seealso \code{\link{loglik}}, \code{\link{estfun.loglik}}, \code{\link{sandwich.loglik}}
 #' @exportClass loglik
 
 #' Maximum Likelihood Estimation with Sandwich Covariance
@@ -128,7 +128,7 @@ loglik <- function(fun, fun_vars=NULL, parameter_info, data, trace = TRUE, contr
   result$fixed_vars <- unique(unlist(strsplit(result$fixed_vars, ":")))
   result$fixed_vars <- result$fixed_vars[!(result$fixed_vars %in% c("0", "1"))]
 
-  result$vars <- c(result$vars, result$fixed_vars)
+  result$vars <- c(result$vars, setNames(result$fixed_vars,result$fixed_vars))
   result$data <- data[, unique(result$vars), drop = FALSE]
 
   # --- Parameter setup ---

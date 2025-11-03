@@ -4,7 +4,7 @@
 \alias{evaluate_function}
 \title{Evaluate a Model Function Dynamically}
 \usage{
-evaluate_function(fun, vars = NULL, parameter_info, data)
+evaluate_function(fun, vars = NULL, parameter_info, data = NULL)
 }
 \arguments{
 \item{fun}{The function to evaluate (e.g. model or cdf).}

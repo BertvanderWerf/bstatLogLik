@@ -4,12 +4,28 @@
 \alias{predict.loglik}
 \title{Predict Method for loglik Objects}
 \usage{
-\method{predict}{loglik}(object, newdata = NULL, ...)
+\method{predict}{loglik}(
+  object,
+  newdata = NULL,
+  se.fit = FALSE,
+  newfun = NULL,
+  nr_simulations = 250,
+  vcov = NULL,
+  ...
+)
 }
 \arguments{
 \item{object}{An object of class \code{loglik}.}
 
 \item{newdata}{Optional data frame for predictions. If NULL, uses training data.}
+
+\item{se.fit}{logical switch indicating if standard errors are required.}
+
+\item{newfun}{a new function to evaluate with object parameters}
+
+\item{nr_simulations}{number of simulations to perform whe se.fit = TRUE}
+
+\item{vcov}{covariance matrix if NULL vcov(object) is used}
 
 \item{...}{Additional arguments (unused).}
 }

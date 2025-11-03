@@ -66,5 +66,5 @@ Objects of this class contain:
 }
 }
 \seealso{
-\code{\link{loglik}}, \code{\link{estfun.loglik}}, \code{\link{vcov_sandwich.loglik}}
+\code{\link{loglik}}, \code{\link{estfun.loglik}}, \code{\link{sandwich.loglik}}
 }

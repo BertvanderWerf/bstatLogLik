@@ -14,7 +14,8 @@ Config/testthat/edition: 3
 Imports: 
     bstatErr (>= 0.0.0.9000),
     bstatUtils (>= 0.0.0.9000),
-    Deriv
+    Deriv,
+    MASS
 Remotes: 
     BertvanderWerf/bstatErr
     BertvanderWerf/bstatUtils

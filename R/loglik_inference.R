@@ -96,7 +96,7 @@ lrt.loglik <- function(object, ..., test = "LRT") {
     Df = df_vec,
     LogLik = loglik_vec,
     Df_diff = c(NA, diff(df_vec)),
-    LR_stat = c(NA, -2 * diff(loglik_vec)),
+    LR_stat = c(NA, 2 * diff(loglik_vec)),
     Pr_Chi = rep(NA, n_models)
   )
 

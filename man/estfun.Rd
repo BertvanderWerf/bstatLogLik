@@ -4,10 +4,12 @@
 \alias{estfun}
 \title{Extract Score Contributions (estfun) for Sandwich Estimator}
 \usage{
-estfun(object)
+estfun(object, ...)
 }
 \arguments{
 \item{object}{Object of class "loglik".}
+
+\item{...}{Additional arguments (currently unused).}
 }
 \value{
 Matrix of score contributions.

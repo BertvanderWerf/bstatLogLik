@@ -13,6 +13,7 @@ usethis::use_package_doc()
 
 usethis::use_package_doc()
 usethis::use_package("Deriv")
+usethis::use_package("MASS")
 
 usethis::use_dev_package("bstatErr")
 usethis::use_dev_package("bstatUtils")
@@ -57,6 +58,9 @@ usethis::use_test("distributions_lognormal")
 
 usethis::use_r("loglik_inference")
 usethis::use_test("loglik_inference")
+
+usethis::use_r("parameter_info_methods")
+usethis::use_test("parameter_methods")
 
 
 #usethis::rename_files()

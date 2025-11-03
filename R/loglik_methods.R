@@ -181,15 +181,34 @@ model.frame.loglik <- function(object, ...) {
   object$data
 }
 
-#' Extract AIC from loglik Object
+#' Extract AIC or AICc from loglik Object
+#'
+#' Generally use of AICc when the ratio number_of_observations/number_of_parameters_estimated
+#' is small (say < 40). See Burnham & Anderson (2002), page 66.
 #'
 #' @param object An object of class \code{loglik}.
+#' @param corrected Logical; if TRUE return value is the corrected AICc value, if FALSE AIC.
 #' @param ... Additional arguments (unused).
 #' @param k Numeric, penalty per parameter (default 2 for AIC).
-#' @return Numeric, AIC value.
+#'
+#' @return Numeric, AIC or AICc value, depending on value of corrected.
+#'
+#' @references
+#' Burnham, K.P. and Anderson, D.R. (2002) Model selection and multimodel inference:
+#' a practical information-theoretic approach. 2nd ed. Springer-Verlag, New York.
+#' DOI: 10.1007/b97636
+#'
 #' @export
-AIC.loglik <- function(object, ..., k = 2) {
-  -2 * object$lnlik + k * object$npar_estimated
+AIC.loglik <- function(object, corrected=TRUE, ..., k = 2) {
+  npar_estimated <- object$npar_estimated
+  AIC <- -2 * object$lnlik + k * npar_estimated
+  if (corrected) {
+
+    AICc <- AIC + k*npar_estimated*(npar_estimated+1)/
+      (object$nobs-npar_estimated-1)
+    return(AICc)
+  }
+  return(AIC)
 }
 
 #' Extract BIC from loglik Object
@@ -294,16 +313,73 @@ control_settings.loglik <- function(object) {
 #'
 #' @param object An object of class \code{loglik}.
 #' @param newdata Optional data frame for predictions. If NULL, uses training data.
+#' @param se.fit logical switch indicating if standard errors are required.
+#' @param newfun a new function to evaluate with object parameters
+#' @param nr_simulations number of simulations to perform whe se.fit = TRUE
+#' @param vcov covariance matrix if NULL vcov(object) is used
 #' @param ... Additional arguments (unused).
+#'
 #' @return Numeric vector of predicted values.
 #' @export
-predict.loglik <- function(object, newdata = NULL, ...) {
-  if (is.null(newdata)) {
-    return(fitted(object))
+predict.loglik <- function(object, newdata = NULL, se.fit=FALSE, newfun=NULL, nr_simulations=250, vcov=NULL, ...) {
+
+  bstatErr::check_data_frame(newdata, allow_null = TRUE)
+  bstatErr::check_logical(se.fit)
+  bstatErr::check_function(newfun, allow_null=TRUE)
+  bstatErr::check_numeric(nr_simulations, allow_null=TRUE)
+
+  if (nr_simulations<1) {
+    stop('nr_simulations must be a value > 1', call. = FALSE)
   }
 
-  # Reconstruct predictions using parameter_info and newdata
-  # This requires recreating the linear predictors
-  # Implementation depends on your model structure
-  stop("predict() with newdata not yet implemented for loglik objects", call. = FALSE)
+  if (is.null(newdata)) {
+    if (is.null(newfun) && isFALSE(se.fit)) {
+      return(fitted(object))
+    }
+    parinfo <- parameter_info(object)
+  } else {
+    vars_needed <- unique(object$vars)
+    missing_vars <- vars_needed[!vars_needed %in% names(newdata)]
+    stop(sprintf('not all needed vars are in newdata, (%s) is missing.', missing_vars[1]), call. = FALSE)
+
+    for (var in object$vars) {
+      if (is.factor(object$model_data[,var])) {
+        if (!is.factor(newdata[,var])) {
+          stop(sprintf("%s should be a factor in newdata.", var), call. = FALSE)
+        }
+        levels_new <- levels(newdata[,var])
+        levels_old <- levels(object$model_data[,var])
+        if (!all(levels_new %in% levels_old)) {
+          stop(sprintf("%s has more levels in newdata than in object data, please remove.", var), call.=FALSE)
+        }
+      }
+    }
+    parinfo <- create_parameter_info(object, model_data=newdata)
+  }
+
+  if (is.null(newfun)){
+    fun <- object$fun
+  } else {
+    fun <- newfun
+  }
+  if (isTRUE(se.fit)) {
+    if (is.null(nr_simulations)) nr_simulations <- 250
+    if (is.null(vcov)) vcov <- vcov(object)
+
+    simulated_parameter_values <- sample_parameter_info(parinfo, nr_simulations, vcov=vcov)
+
+    m <- sapply(simulated_parameter_values, function(x) {
+                 parinfo$parameter_values <- x
+                 evaluate_function(fun, object$vars, parinfo)
+          })
+    fitted <- m[,1]
+    m <- as.data.frame(t(m[,-1]))
+    se <- sapply(m, sd)
+    res <- cbind(fitted, se, setNames(as.data.frame(t(sapply(m, quantile, p=c(0.025, 0.5, 0.975)))), c('lower.95', 'median', 'upper.95')))
+  } else {
+    res <- evaluate_function(fun, vars=object$vars, parinfo, data=parinfo$model_data)
+  }
+  return(res)
+  # stop("predict() with newdata not yet implemented for loglik objects", call. = FALSE)
 }
+
