@@ -26,10 +26,11 @@ test_that("logLik.loglik returns proper logLik object", {
   expect_equal(attr(ll, "nobs"), 100)
 })
 
-test_that("AIC and BIC compute correctly", {
+test_that("AICc, AIC and BIC compute correctly", {
   obj <- structure(list(lnlik = -50, npar_estimated = 3, nobs = 100), class = "loglik")
 
-  expect_equal(AIC(obj), -2 * (-50) + 2 * 3)
+  expect_equal(AIC(obj, corrected=TRUE), -2 * (-50) + 2 * 3 + 2*3*4/(100-4))
+  expect_equal(AIC(obj, corrected=FALSE), -2 * (-50) + 2 * 3)
   expect_equal(BIC(obj), -2 * (-50) + log(100) * 3)
 })
 

@@ -3,45 +3,15 @@
 \docType{class}
 \name{parameter_info}
 \alias{parameter_info}
-\alias{create_parameter_info}
 \alias{parameter_info-class}
 \title{Parameter Information Structure}
 \usage{
-create_parameter_info(
-  parameter_values,
-  lower_bounds = NULL,
-  upper_bounds = NULL,
-  estimate_flag = NULL,
-  formulas = NULL,
-  model_data = NULL,
-  link_functions = NULL,
-  sep = "."
-)
-
 parameter_info(object)
 }
 \arguments{
-\item{parameter_values}{Named numeric vector of initial parameter values, or an existing \code{parameter_info} object to update.}
-
-\item{lower_bounds}{List of lower bounds for parameter estimates (or NULL for \code{-Inf}).}
-
-\item{upper_bounds}{List of upper bounds for parameter estimates (or NULL for \code{Inf}).}
-
-\item{estimate_flag}{List or vector of 1s and 0s; 1 for estimated, 0 for fixed.}
-
-\item{formulas}{List of formulas for each parameter, or NULL.}
-
-\item{model_data}{Data frame used to generate design matrices.}
-
-\item{link_functions}{List of link functions, or NULL.}
-
-\item{sep}{Separator for parameter names (default ".").}
-
 \item{object}{An object of class \code{loglik}.}
 }
 \value{
-An S3 object of class \code{parameter_info}, see \code{\link{parameter_info}} for structure.
-
 Object of class \code{parameter_info}.
 }
 \description{
@@ -53,7 +23,8 @@ Objects of this class contain:
 \item{\code{parameter_values}: Named list of initial parameter values used in modeling.}
 \item{\code{lower_bounds}: Lower bounds for parameter estimates.}
 \item{\code{upper_bounds}: Upper bounds for parameter estimates.}
-\item{\code{estimate_flag}: Logical or numeric vector (1/0) indicating whether each parameter is estimated (1) or fixed (0).}
+\item{\code{estimate_flag}: Logical or numeric vector (1/0) indicating whether each
+parameter is estimated (1) or fixed (0).}
 \item{\code{link_functions}: List of link functions for each parameter.}
 \item{\code{formulas}: List of formulas describing model structure for each parameter.}
 \item{\code{design_matrices}: List of design matrices generated from formulas and data.}
@@ -61,20 +32,6 @@ Objects of this class contain:
 \item{\code{sep}: String defining separator for compound parameter names.}
 }
 }
-\examples{
-df <- expand.grid(Capital = c("A", "B"), Lower = c("a", "b"))
-info1 <- create_parameter_info(
-  parameter_values = c(k = 2, lambda = 10, c = 0),
-  estimate_flag = c(k = 1, lambda = 1, c = 0),
-  formulas = list(k = ~0+Capital, lambda = ~1, c = ~Capital*Lower),
-  model_data = df
-)
-# Update only the formula for 'k', keeping other slots
-info2 <- create_parameter_info(
-  parameter_values = info1,
-  formulas = list(k = ~Capital + Lower)
-)
-}
 \seealso{
-\code{\link{create_parameter_info}}
+\code{\link{create_parameter_info}}, \code{\link{summary.parameter_info}}
 }

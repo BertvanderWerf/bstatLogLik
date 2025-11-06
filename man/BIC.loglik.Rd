@@ -15,5 +15,6 @@
 Numeric, BIC value.
 }
 \description{
-Extract BIC from loglik Object
+Bayesian Information Criterion for model selection.
+Lower values indicate better fit (with stronger penalty for model complexity).
 }

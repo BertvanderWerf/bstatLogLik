@@ -10,6 +10,7 @@ usethis::use_git()              # If Git is not already initialized
 #usethis::use_github()          # Connects and pushes to GitHub
 
 usethis::use_package_doc()
+usethis::use_vignette("getting_started.Rmd")
 
 usethis::use_package_doc()
 usethis::use_package("Deriv")

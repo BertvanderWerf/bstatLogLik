@@ -2,7 +2,7 @@
 % Please edit documentation in R/loglik_methods.R
 \name{gradient_matrix}
 \alias{gradient_matrix}
-\title{Extract Gradient/Score Matrix}
+\title{Extract Gradient Matrix (Score Matrix)}
 \usage{
 gradient_matrix(object)
 }
@@ -10,8 +10,9 @@ gradient_matrix(object)
 \item{object}{An object of class \code{loglik}.}
 }
 \value{
-Matrix (n_obs x n_params) of score contributions.
+Numeric matrix (n_obs x n_params) of score contributions.
 }
 \description{
-Returns the matrix of score contributions (gradient for each observation).
+Returns individual contribution to score (gradient) from each observation.
+Used for sandwich covariance estimation and robust inference.
 }

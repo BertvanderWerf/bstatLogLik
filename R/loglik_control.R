@@ -94,3 +94,35 @@ loglik_control <- function(
   class(result) <- c("loglik_control", class(result))
   result
 }
+
+
+#' Print method for loglik_control
+#'
+#' @param x Object of class \code{loglik_control}.
+#' @param ... Additional arguments (unused).
+#' @return Invisibly returns the input object.
+#' @export
+print.loglik_control <- function(x, ...) {
+  cat("Likelihood Optimization Control\n")
+  cat("===============================\n")
+  cat("Method:               ", x$method, "\n")
+  cat("Hessian:              ", x$hessian, "\n")
+  cat("Convergence criteria: ", paste(x$criterium, collapse = ", "), "\n")
+  cat("Tolerance (eps):      ", x$eps, "\n")
+  cat("Max iterations:       ", x$nsteps, "\n")
+
+  if (x$method %in% c("Levenberg", "Marquardt")) {
+    cat("\nDamping parameters:\n")
+    cat("  Lambda:             ", x$lambda, "\n")
+    cat("  Multiplier:         ", x$lambda_multiplier, "\n")
+  }
+
+  cat("\nNumerical options:\n")
+  cat("  Use ginv:           ", x$use_ginv, "\n")
+  cat("  Replace NaN:        ", x$replace_nan, "\n")
+  cat("  Replace Inf:        ", x$replace_inf, "\n")
+  cat("  Reduce data:        ", x$reduce, "\n")
+
+  invisible(x)
+}
+

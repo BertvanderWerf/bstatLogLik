@@ -15,5 +15,5 @@
 Invisibly returns the input object.
 }
 \description{
-Print method for loglik fitted models
+Displays a concise summary of model fitting results.
 }

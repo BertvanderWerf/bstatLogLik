@@ -13,5 +13,6 @@ hessian(object)
 Numeric matrix, Hessian at the optimum.
 }
 \description{
-Extract Hessian Matrix
+Returns the second derivative matrix at the optimum.
+Useful for checking curvature and numerical stability of fit.
 }

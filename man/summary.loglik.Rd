@@ -12,8 +12,22 @@
 \item{...}{Additional arguments (unused).}
 }
 \value{
-Summary data frame with estimates, standard errors, and inference.
+Summary data frame invisibly with parameter estimates and inference.
 }
 \description{
-Summary method for loglik fitted models
+Provides comprehensive summary of maximum likelihood estimation results,
+including parameter estimates, standard errors, bounds, and diagnostics.
+}
+\details{
+The summary displays:
+\itemize{
+\item Log-likelihood value at the optimum
+\item Convergence status
+\item Number of observations and parameters
+\item Detailed parameter table with estimates, SE, bounds, CI, p-values
+\item Boundary parameter warnings (if any)
+}
+
+\strong{Boundary warnings}: Parameters converging to bounds indicate potential issues.
+See \code{\link{check_boundary_parameters}} for details.
 }

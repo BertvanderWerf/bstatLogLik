@@ -3,39 +3,9 @@
 \docType{class}
 \name{loglik_fit}
 \alias{loglik_fit}
-\alias{loglik}
 \alias{loglik-class}
 \alias{loglik_fit-class}
 \title{Fitted Maximum Likelihood Model}
-\usage{
-loglik(
-  fun,
-  fun_vars = NULL,
-  parameter_info,
-  data,
-  trace = TRUE,
-  control = loglik_control(),
-  n = NULL
-)
-}
-\arguments{
-\item{fun}{Function. Likelihood function (not log-likelihood).}
-
-\item{fun_vars}{a named character vector. Name(s) of primary variables for function, name should be a column-name in data.}
-
-\item{parameter_info}{Object of class \code{parameter_info} from \code{create_parameter_info()}.}
-
-\item{data}{Data frame or matrix with all analysis variables or NULL, if NULL parameter_info$model_data is used.}
-
-\item{trace}{Logical. Print iteration progress.}
-
-\item{control}{List from loglik_control().}
-
-\item{n}{Character or NULL. Name of frequency/count variable.}
-}
-\value{
-Object of class "loglik" with coefficients, vcov, diagnostics.
-}
 \description{
 S3 class containing results from maximum likelihood estimation via \code{\link{loglik}}.
 }
@@ -63,8 +33,9 @@ Objects of this class contain:
 \item{\code{hessian}: Final Hessian matrix at the optimum.}
 \item{\code{fitted_values}: Vector of fitted values from the model.}
 \item{\code{derivs}: List containing derivative evaluations from the final iteration.}
+\item{\code{boundary_parameters}: (if any) Data frame identifying parameters that converged to bounds.}
 }
 }
 \seealso{
-\code{\link{loglik}}, \code{\link{estfun.loglik}}, \code{\link{sandwich.loglik}}
+\code{\link{loglik}}, \code{\link{check_boundary_parameters}}, \code{\link{estfun.loglik}}, \code{\link{vcov_sandwich.loglik}}
 }

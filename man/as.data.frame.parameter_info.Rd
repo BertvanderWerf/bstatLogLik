@@ -2,13 +2,54 @@
 % Please edit documentation in R/parameter_info_methods.R
 \name{as.data.frame.parameter_info}
 \alias{as.data.frame.parameter_info}
-\title{Title}
+\title{Convert parameter_info to data frame}
 \usage{
-\method{as.data.frame}{parameter_info}(parameter_info, data = NULL, ...)
+\method{as.data.frame}{parameter_info}(object, row.names = NULL, optional = FALSE, data = NULL, ...)
 }
 \arguments{
-\item{...}{}
+\item{object}{A \code{parameter_info} object.}
+
+\item{row.names}{Ignored (for compatibility with \code{as.data.frame} generic).}
+
+\item{optional}{Ignored (for compatibility with \code{as.data.frame} generic).}
+
+\item{data}{Optional data frame. If provided, design matrices are regenerated
+from the formulas in \code{parameter_info} using this data.
+If NULL (default), the \code{model_data} stored in \code{parameter_info}
+is used.}
+
+\item{...}{Additional arguments passed to \code{\link{as.data.frame}}.}
+}
+\value{
+A data frame with one column per parameter. Number of rows equals
+the number of observations in the design matrix or provided data.
 }
 \description{
-Title
+Converts a \code{parameter_info} object to a data frame by computing
+the design matrix multiplied by parameter values for each parameter.
+}
+\details{
+This method expands parameter information using design matrices and returns
+predicted parameter values. If the original \code{parameter_info} does not
+have design matrices (when created without \code{model_data}), you must
+provide a \code{data} argument.
+
+The result contains one column per parameter with all rows corresponding
+to the observations in the design matrix.
+}
+\examples{
+df <- expand.grid(Group = c("A", "B"), Rep = 1:2)
+info <- create_parameter_info(
+  parameter_values = c(k = 2, lambda = 10),
+  formulas = list(k = ~Group, lambda = ~1),
+  model_data = df
+)
+
+# Convert to data frame with stored model data
+as.data.frame(info)
+
+# Convert with new data
+new_df <- expand.grid(Group = c("A", "B", "C"), Rep = 1:2)
+as.data.frame(info, data = new_df)
+
 }

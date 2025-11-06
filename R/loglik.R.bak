@@ -32,7 +32,7 @@
 #' @aliases loglik-class loglik_fit-class
 #' @docType class
 #'
-#' @seealso \code{\link{loglik}}, \code{\link{check_boundary_parameters}}, \code{\link{estfun.loglik}}, \code{\link{vcov_sandwich.loglik}}
+#' @seealso \code{\link{loglik}}, \code{\link{check_boundary_parameters}}, \code{\link{estfun.loglik}}, \code{\link{sandwich.loglik}}
 #' @exportClass loglik
 NULL
 
@@ -504,8 +504,8 @@ loglik <- function(fun, fun_vars=NULL, parameter_info, data, trace = TRUE,
     warning("Iterations not optimal: expected values ± Inf, see fitted_values")
   }
 
-  # ============================================================================
-  # CHECK FOR PARAMETERS AT BOUNDARIES
+# ============================================================================
+  # CHECK FOR PARAMETERS AT BOUNDARIES (NEW CODE BLOCK)
   # ============================================================================
   # Detect parameters that converged to their specified bounds
   # This is important diagnostic information

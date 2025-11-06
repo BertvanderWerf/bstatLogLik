@@ -1,28 +1,59 @@
 
+#' Print method for loglik_control
+#'
+#' @param x Object of class \code{loglik_control}.
+#' @param ... Additional arguments (unused).
+#' @return Invisibly returns the input object.
+#' @export
+print.loglik_control <- function(x, ...) {
+  cat("Likelihood Optimization Control\n")
+  cat("===============================\n")
+  cat("Method:               ", x$method, "\n")
+  cat("Hessian:              ", x$hessian, "\n")
+  cat("Convergence criteria: ", paste(x$criterium, collapse = ", "), "\n")
+  cat("Tolerance (eps):      ", x$eps, "\n")
+  cat("Max iterations:       ", x$nsteps, "\n")
+
+  if (x$method %in% c("Levenberg", "Marquardt")) {
+    cat("\nDamping parameters:\n")
+    cat("  Lambda:             ", x$lambda, "\n")
+    cat("  Multiplier:         ", x$lambda_multiplier, "\n")
+  }
+
+  cat("\nNumerical options:\n")
+  cat("  Use ginv:           ", x$use_ginv, "\n")
+  cat("  Replace NaN:        ", x$replace_nan, "\n")
+  cat("  Replace Inf:        ", x$replace_inf, "\n")
+  cat("  Reduce data:        ", x$reduce, "\n")
+
+  invisible(x)
+}
+
+#' Print method for loglik fitted models
+#'
+#' @param x Object of class \code{loglik}.
+#' @param ... Additional arguments (unused).
+#' @return Invisibly returns the input object.
+#' @export
+print.loglik <- function(x, ...) {
+  cat("Maximum Likelihood Estimation\n")
+  cat("=============================\n")
+  cat("Log-likelihood: ", round(x$lnlik, 4), "\n")
+  cat("Converged:      ", x$converged, "\n")
+  cat("Observations:   ", x$nobs, "\n")
+  cat("Parameters:     ", x$npar_estimated, " estimated\n")
+
+  cat("\nCoefficients:\n")
+  print(round(x$coefficients, 4))
+
+  invisible(x)
+}
 
 #' Summary method for loglik fitted models
 #'
-#' Provides comprehensive summary of maximum likelihood estimation results,
-#' including parameter estimates, standard errors, bounds, and diagnostics.
-#'
 #' @param object Object of class \code{loglik}.
 #' @param ... Additional arguments (unused).
-#'
-#' @details
-#' The summary displays:
-#' \itemize{
-#'   \item Log-likelihood value at the optimum
-#'   \item Convergence status
-#'   \item Number of observations and parameters
-#'   \item Detailed parameter table with estimates, SE, bounds, CI, p-values
-#'   \item Boundary parameter warnings (if any)
-#' }
-#'
-#' **Boundary warnings**: Parameters converging to bounds indicate potential issues.
-#' See \code{\link{check_boundary_parameters}} for details.
-#'
-#' @return Summary data frame invisibly with parameter estimates and inference.
-#'
+#' @return Summary data frame with estimates, standard errors, and inference.
 #' @export
 summary.loglik <- function(object, ...) {
   cat("Maximum Likelihood Estimation Results\n")
@@ -36,156 +67,14 @@ summary.loglik <- function(object, ...) {
   cat("Parameter Estimates:\n")
   print(object$summary, digits = 4, row.names = FALSE)
 
-  # ============================================================================
-  # DISPLAY BOUNDARY PARAMETER WARNINGS IF PRESENT (NEW)
-  # ============================================================================
-  if (!is.null(object$boundary_parameters) && nrow(object$boundary_parameters) > 0) {
-    cat("\n")
-    cat("??  WARNING: Parameters at Boundaries ??\n")
-    cat("=" , paste(rep("=", 32), collapse = ""), "\n", sep="")
-    cat("The following parameters converged to their ",
-        unique(object$boundary_parameters$bound_type), " bounds:\n\n")
-    print(object$boundary_parameters, row.names = FALSE)
-    cat("\nPossible causes:\n")
-    cat(" ? Bounds may be too restrictive\n")
-    cat(" ? Parameters may not be well-identified by data\n")
-    cat(" ? Model may be over-specified\n")
-    cat("\nRecommendations:\n")
-    cat(" ? Review parameter bounds\n")
-    cat(" ? Consider model reformulation\n")
-    cat(" ? Inspect gradient behavior in trace_history()\n")
-    cat(" ? Use check_boundary_parameters() for details\n\n")
-  }
-
   invisible(object$summary)
-}
-
-#' Check which parameters are at their bounds
-#'
-#' Identifies parameters in a fitted loglik object that converged to
-#' (or very close to) their specified lower or upper bounds.
-#'
-#' @param object An object of class \code{loglik}
-#' @param tolerance Numerical tolerance for boundary detection (default 1e-6)
-#'
-#' @details
-#' Parameters are considered "at boundary" if they are within \code{tolerance}
-#' of their specified bounds. Infinite bounds are ignored.
-#'
-#' Parameters at boundaries suggest:
-#' \itemize{
-#'   \item Bounds may be too restrictive
-#'   \item Parameters may not be identifiable from the data
-#'   \item Model specification may need review
-#' }
-#'
-#' @return Data frame with columns:
-#'   \item{parameter}{Parameter name}
-#'   \item{at_lower}{Logical: TRUE if at lower bound}
-#'   \item{at_upper}{Logical: TRUE if at upper bound}
-#'   \item{estimate}{Parameter estimate value}
-#'   \item{lower_bound}{Lower bound value}
-#'   \item{upper_bound}{Upper bound value}
-#'   \item{distance_to_bound}{Distance from estimate to nearest bound}
-#'
-#' @examples
-#' \dontrun{
-#' # After fitting a model
-#' check_params <- check_boundary_parameters(fit_obj)
-#' print(check_params)
-#' }
-#'
-#' @export
-check_boundary_parameters <- function(object, tolerance = 1e-6) {
-  if (!inherits(object, "loglik")) {
-    stop("object must be of class 'loglik'", call. = FALSE)
-  }
-
-  pars_full <- unlist(object$parameter_info$parameter_values)
-  par_min_full <- unlist(object$parameter_info$lower_bounds)
-  par_max_full <- unlist(object$parameter_info$upper_bounds)
-
-  # Determine boundary status
-  at_lower <- abs(pars_full - par_min_full) < tolerance & !is.infinite(par_min_full)
-  at_upper <- abs(pars_full - par_max_full) < tolerance & !is.infinite(par_max_full)
-
-  # Compute distance to nearest bound
-  dist_lower <- pars_full - par_min_full
-  dist_upper <- par_max_full - pars_full
-  distance_to_bound <- pmin(abs(dist_lower), abs(dist_upper))
-  distance_to_bound[is.infinite(par_min_full) & is.infinite(par_max_full)] <- Inf
-
-  result <- data.frame(
-    parameter = names(pars_full),
-    at_lower = at_lower,
-    at_upper = at_upper,
-    estimate = as.numeric(pars_full),
-    lower_bound = as.numeric(par_min_full),
-    upper_bound = as.numeric(par_max_full),
-    distance_to_bound = distance_to_bound,
-    stringsAsFactors = FALSE
-  )
-
-  class(result) <- c("boundary_check", "data.frame")
-  result
-}
-
-#' Print method for boundary_check objects
-#'
-#' Displays results from check_boundary_parameters() in a readable format.
-#'
-#' @param x Result from check_boundary_parameters()
-#' @param ... Additional arguments (unused)
-#'
-#' @export
-print.boundary_check <- function(x, ...) {
-  cat("\n")
-  cat("=" , paste(rep("=", 35), collapse=""), "\n", sep="")
-  cat("Boundary Parameter Check\n")
-  cat("=" , paste(rep("=", 35), collapse=""), "\n\n", sep="")
-
-  # Find parameters at boundaries
-  at_boundary <- x$at_lower | x$at_upper
-  boundary_params <- x[at_boundary, ]
-
-  if (nrow(boundary_params) == 0) {
-    cat("? No parameters at boundaries\n\n")
-    cat("All parameters are in the interior of the parameter space.\n\n")
-  } else {
-    cat(sprintf("%d parameter(s) at or near boundaries:\n\n", nrow(boundary_params)))
-
-    # Display with cleaner formatting
-    print_df <- data.frame(
-      Parameter = boundary_params$parameter,
-      Estimate = sprintf("%.6f", boundary_params$estimate),
-      Bound = ifelse(boundary_params$at_lower, "LOWER", "UPPER"),
-      Bound_Value = sprintf("%.6f",
-                           ifelse(boundary_params$at_lower,
-                                 boundary_params$lower_bound,
-                                 boundary_params$upper_bound)),
-      Distance = sprintf("%.2e", boundary_params$distance_to_bound),
-      row.names = FALSE
-    )
-    print(print_df)
-
-    cat("\n")
-    cat("??  Recommendations:\n")
-    cat("   ? Review bounds - are they appropriate?\n")
-    cat("   ? Check if parameters are identifiable\n")
-    cat("   ? Consider model reformulation\n")
-    cat("   ? Inspect gradient in trace_history()\n\n")
-  }
-
-  invisible(x)
 }
 
 #' Extract Coefficients from loglik Object
 #'
 #' @param object An object of class \code{loglik}.
 #' @param ... Additional arguments (unused).
-#'
 #' @return Named numeric vector of parameter estimates.
-#'
 #' @export
 coef.loglik <- function(object, ...) {
   object$coefficients
@@ -198,9 +87,7 @@ coef.loglik <- function(object, ...) {
 #'
 #' @param object An object of class \code{loglik}.
 #' @param ... Additional arguments (unused).
-#'
 #' @return Variance-covariance matrix.
-#'
 #' @export
 vcov.loglik <- function(object, ...) {
   object$vcov
@@ -210,9 +97,7 @@ vcov.loglik <- function(object, ...) {
 #'
 #' @param object An object of class \code{loglik}.
 #' @param ... Additional arguments (unused).
-#'
 #' @return Object of class \code{logLik} with attributes for \code{df} and \code{nobs}.
-#'
 #' @export
 logLik.loglik <- function(object, ...) {
   val <- object$lnlik
@@ -226,9 +111,7 @@ logLik.loglik <- function(object, ...) {
 #'
 #' @param object An object of class \code{loglik}.
 #' @param ... Additional arguments (unused).
-#'
 #' @return Integer, number of observations used in fitting.
-#'
 #' @export
 nobs.loglik <- function(object, ...) {
   object$nobs
@@ -238,9 +121,7 @@ nobs.loglik <- function(object, ...) {
 #'
 #' @param object An object of class \code{loglik}.
 #' @param ... Additional arguments (unused).
-#'
 #' @return Integer, residual degrees of freedom (n - p).
-#'
 #' @export
 df.residual.loglik <- function(object, ...) {
   object$nobs - object$npar_estimated
@@ -262,9 +143,7 @@ df.model.loglik <- function(object, ...) {
 #'
 #' @param object An object of class \code{loglik}.
 #' @param ... Additional arguments (unused).
-#'
 #' @return Numeric vector of fitted values.
-#'
 #' @export
 fitted.loglik <- function(object, ...) {
   object$fitted_values
@@ -274,9 +153,7 @@ fitted.loglik <- function(object, ...) {
 #'
 #' @param x An object of class \code{loglik}.
 #' @param ... Additional arguments (unused).
-#'
 #' @return List of formulas for each parameter.
-#'
 #' @export
 formula.loglik <- function(x, ...) {
   x$formula
@@ -325,25 +202,20 @@ model.frame.loglik <- function(object, ...) {
 AIC.loglik <- function(object, corrected=TRUE, ..., k = 2) {
   npar_estimated <- object$npar_estimated
   AIC <- -2 * object$lnlik + k * npar_estimated
-
   if (corrected) {
-    AICc <- AIC + k*npar_estimated*(npar_estimated+1)/(object$nobs-npar_estimated-1)
+
+    AICc <- AIC + k*npar_estimated*(npar_estimated+1)/
+      (object$nobs-npar_estimated-1)
     return(AICc)
   }
-
   return(AIC)
 }
 
 #' Extract BIC from loglik Object
 #'
-#' Bayesian Information Criterion for model selection.
-#' Lower values indicate better fit (with stronger penalty for model complexity).
-#'
 #' @param object An object of class \code{loglik}.
 #' @param ... Additional arguments (unused).
-#'
 #' @return Numeric, BIC value.
-#'
 #' @export
 BIC.loglik <- function(object, ...) {
   -2 * object$lnlik + log(object$nobs) * object$npar_estimated
@@ -352,9 +224,7 @@ BIC.loglik <- function(object, ...) {
 #' Check Convergence Status
 #'
 #' @param object An object of class \code{loglik}.
-#'
 #' @return Logical, TRUE if optimization converged.
-#'
 #' @export
 converged <- function(object) {
   UseMethod("converged")
@@ -367,13 +237,10 @@ converged.loglik <- function(object) {
 
 #' Extract Optimization Trace
 #'
-#' Returns iteration history from the optimization process showing
-#' parameter values, gradients, and log-likelihood at each iteration.
+#' Returns iteration history from the optimization process.
 #'
 #' @param object An object of class \code{loglik}.
-#'
 #' @return Matrix with columns: step, criterion, parameters, gradients, log-likelihood.
-#'
 #' @export
 trace_history <- function(object) {
   UseMethod("trace_history")
@@ -386,13 +253,8 @@ trace_history.loglik <- function(object) {
 
 #' Extract Hessian Matrix
 #'
-#' Returns the second derivative matrix at the optimum.
-#' Useful for checking curvature and numerical stability of fit.
-#'
 #' @param object An object of class \code{loglik}.
-#'
 #' @return Numeric matrix, Hessian at the optimum.
-#'
 #' @export
 hessian <- function(object) {
   UseMethod("hessian")
@@ -403,15 +265,12 @@ hessian.loglik <- function(object) {
   object$hessian
 }
 
-#' Extract Gradient Matrix (Score Matrix)
+#' Extract Gradient/Score Matrix
 #'
-#' Returns individual contribution to score (gradient) from each observation.
-#' Used for sandwich covariance estimation and robust inference.
+#' Returns the matrix of score contributions (gradient for each observation).
 #'
 #' @param object An object of class \code{loglik}.
-#'
-#' @return Numeric matrix (n_obs x n_params) of score contributions.
-#'
+#' @return Matrix (n_obs x n_params) of score contributions.
 #' @export
 gradient_matrix <- function(object) {
   UseMethod("gradient_matrix")
@@ -421,35 +280,6 @@ gradient_matrix <- function(object) {
 gradient_matrix.loglik <- function(object) {
   object$gradient_matrix
 }
-
-#' Print method for loglik fitted models
-#'
-#' Displays a concise summary of model fitting results.
-#'
-#' @param x Object of class \code{loglik}.
-#' @param ... Additional arguments (unused).
-#'
-#' @return Invisibly returns the input object.
-#'
-#' @export
-print.loglik <- function(x, ...) {
-  cat("Maximum Likelihood Estimation\n")
-  cat("=============================\n")
-  cat("Log-likelihood: ", round(x$lnlik, 4), "\n")
-  cat("Converged:      ", x$converged, "\n")
-  cat("Observations:   ", x$nobs, "\n")
-  cat("Parameters:     ", x$npar_estimated, " estimated\n")
-
-  cat("\nCoefficients:\n")
-  print(round(x$coefficients, 4))
-
-  # Alert to boundary issues if present
-  if (!is.null(x$boundary_parameters) && nrow(x$boundary_parameters) > 0) {
-    cat("\n??  ", nrow(x$boundary_parameters), " parameter(s) at bounds - see summary()\n")
-  }
-  invisible(x)
-}
-
 
 #' Extract Parameter Information Structure
 #'
@@ -510,9 +340,7 @@ predict.loglik <- function(object, newdata = NULL, se.fit=FALSE, newfun=NULL, nr
   } else {
     vars_needed <- unique(object$vars)
     missing_vars <- vars_needed[!vars_needed %in% names(newdata)]
-    if (!is.null(missing_vars) && length(missing_vars)!=0) {
-      stop(sprintf('not all needed vars are in newdata, (%s) is missing.', missing_vars[1]), call. = FALSE)
-    }
+    stop(sprintf('not all needed vars are in newdata, (%s) is missing.', missing_vars[1]), call. = FALSE)
 
     for (var in object$vars) {
       if (is.factor(object$model_data[,var])) {
@@ -526,7 +354,7 @@ predict.loglik <- function(object, newdata = NULL, se.fit=FALSE, newfun=NULL, nr
         }
       }
     }
-    parinfo <- create_parameter_info(object$parameter_info, model_data=newdata)
+    parinfo <- create_parameter_info(object, model_data=newdata)
   }
 
   if (is.null(newfun)){
@@ -543,7 +371,6 @@ predict.loglik <- function(object, newdata = NULL, se.fit=FALSE, newfun=NULL, nr
     m <- sapply(simulated_parameter_values, function(x) {
                  parinfo$parameter_values <- x
                  evaluate_function(fun, object$vars, parinfo)
-
           })
     fitted <- m[,1]
     m <- as.data.frame(t(m[,-1]))

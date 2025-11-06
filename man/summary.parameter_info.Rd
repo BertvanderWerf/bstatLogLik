@@ -2,16 +2,41 @@
 % Please edit documentation in R/create_parameter_info.R
 \name{summary.parameter_info}
 \alias{summary.parameter_info}
-\title{Summary for "parameter_info" object}
+\title{Summary method for parameter_info objects}
 \usage{
-\method{summary}{parameter_info}(object)
+\method{summary}{parameter_info}(object, ...)
 }
 \arguments{
-\item{object}{A parameter_info object as returned by \code{create_parameter_info()}.}
+\item{object}{A parameter_info object as returned by \code{\link{create_parameter_info}}.}
+
+\item{...}{Additional arguments (unused).}
 }
 \value{
-A list with info and parameter details for inspection or printing.
+Invisibly returns a list with two components:
+\item{info}{Data frame with parameter names and formula representations}
+\item{parameters}{Data frame with all parameter values, bounds, and estimate flags}
 }
 \description{
-Prints formula representation and tabulated parameter values.
+Prints a human-readable summary of parameter information including
+formulas with link functions and a table of parameter values, bounds,
+and estimate flags.
+}
+\details{
+The returned list is structured as follows:
+\itemize{
+\item \code{info}: Shows the formula for each parameter with its link function applied
+\item \code{parameters}: Tabular summary of all parameter-level details including
+base parameter name, full parameter name (after design matrix expansion),
+parameter values, bounds, and estimate flags
+}
+}
+\examples{
+df <- expand.grid(Group = c(\"A\", \"B\"))
+info <- create_parameter_info(
+  parameter_values = c(k = 2, lambda = 10),
+  formulas = list(k = ~Group, lambda = ~1),
+  model_data = df
+)
+summary(info)
+
 }

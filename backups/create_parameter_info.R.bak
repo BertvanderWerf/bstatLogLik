@@ -7,7 +7,7 @@
 #'     \item{\code{parameter_values}: Named list of initial parameter values used in modeling.}
 #'     \item{\code{lower_bounds}: Lower bounds for parameter estimates.}
 #'     \item{\code{upper_bounds}: Upper bounds for parameter estimates.}
-#'   \item{\code{estimate_flag}: Logical or numeric vector (1/0) indicating whether each
+#'   \item{\code{estimate_flag}: Logical or numeric vector (1/0) indicating whether each 
 #'     parameter is estimated (1) or fixed (0).}
 #'     \item{\code{link_functions}: List of link functions for each parameter.}
 #'     \item{\code{formulas}: List of formulas describing model structure for each parameter.}
@@ -37,7 +37,7 @@ NULL
 #' The function performs the following steps:
 #' \enumerate{
 #'   \item Validates parameter_values as a named numeric vector or existing parameter_info object
-#'   \item Initializes formulas (default ~1), link functions (default 'identity'), and bounds (default ?Inf)
+#'   \item Initializes formulas (default ~1), link functions (default 'identity'), and bounds (default ±Inf)
 #'   \item Expands bounds, flags, and other arguments to match parameter structure
 #'   \item Generates design matrices from formulas and model_data
 #'   \item Returns S3 object with class parameter_info
@@ -46,19 +46,19 @@ NULL
 #' For compositional updates, pass an existing parameter_info object as \code{parameter_values}
 #' and specify only the arguments you wish to change.
 #'
-#' @param parameter_values Named numeric vector of initial parameter values, or an existing
+#' @param parameter_values Named numeric vector of initial parameter values, or an existing 
 #'   \code{parameter_info} object to update. Must have unique, non-empty names.
-#' @param lower_bounds List or named vector of lower bounds for parameter estimates.
+#' @param lower_bounds List or named vector of lower bounds for parameter estimates. 
 #'   If NULL, defaults to -Inf. Can be recycled to match parameter structure.
-#' @param upper_bounds List or named vector of upper bounds for parameter estimates.
+#' @param upper_bounds List or named vector of upper bounds for parameter estimates. 
 #'   If NULL, defaults to Inf. Can be recycled to match parameter structure.
-#' @param estimate_flag List, vector, or logical of values (1/TRUE for estimated, 0/FALSE for fixed).
+#' @param estimate_flag List, vector, or logical of values (1/TRUE for estimated, 0/FALSE for fixed). 
 #'   If NULL, defaults to 1 (estimate all). Can be recycled to match parameter structure.
-#' @param formulas List of formulas for each parameter, or a single formula to apply to all.
+#' @param formulas List of formulas for each parameter, or a single formula to apply to all. 
 #'   If NULL, defaults to ~1 (intercept only).
-#' @param model_data Data frame used to generate design matrices. If NULL, design matrices are NULL
+#' @param model_data Data frame used to generate design matrices. If NULL, design matrices are NULL 
 #'   and a warning is issued.
-#' @param link_functions List or character vector of link function names.
+#' @param link_functions List or character vector of link function names. 
 #'   If NULL, defaults to 'identity'. Supports character strings or function objects.
 #' @param sep Separator for parameter names in composite parameter lists (default \".\").
 #'
@@ -209,9 +209,9 @@ create_parameter_info <- function(
   param_names <- names(param_list)
 
   # Check that parameter_values is properly named
-  if (is.null(param_names) || any(param_names == "") || any(duplicated(param_names))) {
+  if (is.null(param_names) || any(param_names == \"\") || any(duplicated(param_names))) {
     stop(
-      "parameter_values must be a named vector with unique, non-empty names",
+      \"parameter_values must be a named vector with unique, non-empty names\",
       call. = FALSE
     )
   }
@@ -219,7 +219,7 @@ create_parameter_info <- function(
   # Check that all parameter values are numeric
   if (!all(sapply(param_list, is.numeric))) {
     stop(
-      "All parameter values must be numeric",
+      \"All parameter values must be numeric\",
       call. = FALSE
     )
   }
@@ -243,7 +243,7 @@ create_parameter_info <- function(
   }
 
   # Verify all formulas are actually formula objects
-  stopifnot(all(sapply(formulas, inherits, "formula")))
+  stopifnot(all(sapply(formulas, inherits, \"formula\")))
 
   # ============================================================================
   # Handle link functions: standardize to list
@@ -251,7 +251,7 @@ create_parameter_info <- function(
   #
   if (is.null(link_functions)) {
     # Default: identity link for all parameters
-    link_functions <- setNames(rep(list("identity"), n_params), param_names)
+    link_functions <- setNames(rep(list(\"identity\"), n_params), param_names)
   } else if (is.character(link_functions) && is.null(names(link_functions))) {
     # Character vector without names: recycle across parameters
     link_functions <- bstatUtils::assign_list_circular(
@@ -261,7 +261,7 @@ create_parameter_info <- function(
     # List or named vector: standardize and fill missing with 'identity'
     link_functions <- as.list(link_functions)
     link_functions <- bstatUtils::update_by_name(
-      setNames(rep(list("identity"), n_params), param_names),
+      setNames(rep(list(\"identity\"), n_params), param_names),
       link_functions, param_names
     )
   }
@@ -286,10 +286,8 @@ create_parameter_info <- function(
       design_matrices[[i]] <- model.matrix(formulas[[i]], data = model_data)
       # Clean column names: remove parentheses for consistency
       colnames(design_matrices[[i]]) <- gsub(
-      "(", "", gsub(")", "",
+      "(", "", gsub(")", "", 
       colnames(design_matrices[[i]]), fixed=TRUE), fixed=TRUE)
-
-      # Expand parameter values to match number of design matrix columns
       param_list[[i]] <- rep_len(param_list[[i]], ncol(design_matrices[[i]]))
       names(param_list[[i]]) <- colnames(design_matrices[[i]])
     }
@@ -335,8 +333,7 @@ create_parameter_info <- function(
 
 #' Summary method for parameter_info objects
 #'
-#' Prints a human-readable summary of parameter information including
-#' formulas with link functions and a table of parameter values, bounds,
+#' Prints formula representation and tabulated parameter values.
 #' and estimate flags.
 #'
 #' @param object A parameter_info object as returned by \code{\link{create_parameter_info}}.

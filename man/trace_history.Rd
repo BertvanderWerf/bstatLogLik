@@ -13,5 +13,6 @@ trace_history(object)
 Matrix with columns: step, criterion, parameters, gradients, log-likelihood.
 }
 \description{
-Returns iteration history from the optimization process.
+Returns iteration history from the optimization process showing
+parameter values, gradients, and log-likelihood at each iteration.
 }

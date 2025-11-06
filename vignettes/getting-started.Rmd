@@ -1,0 +1,562 @@
+---
+title: "Getting Started with bstatLogLik: Maximum Likelihood Estimation Workflow"
+author: "bstatLogLik Package"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Getting Started with bstatLogLik}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+# Getting Started with bstatLogLik
+
+The **bstatLogLik** package provides a flexible framework for maximum likelihood estimation (MLE) with automatic differentiation, parameter constraints, model comparison, and visualization tools. This vignette walks through a complete workflow using the Weibull distribution as an example.
+
+## Overview
+
+The typical workflow consists of:
+
+1. **Data preparation** - Simulate or load data
+2. **Parameter initialization** - Set up parameter structure with `create_parameter_info()`
+3. **Model fitting** - Estimate parameters with `loglik()`
+4. **Model comparison** - Compare nested models using likelihood ratio tests
+5. **Diagnostics** - Check convergence, boundary parameters, and residuals
+6. **Visualization** - Plot fitted values and confidence intervals
+7. **Inference** - Extract parameters, standard errors, and test statistics
+
+## Installation & Setup
+
+```{r, eval=FALSE}
+# Install from GitHub
+devtools::install_github("bertvanderwerf/bstatLogLik")
+
+# Load package
+library(bstatLogLik)
+library(ggplot2)  # For visualization
+
+# Optional: ensure all functions are loaded
+devtools::load_all()
+```
+
+---
+
+# Step 1: Data Preparation
+
+We'll simulate data from a **Weibull distribution** with different shape parameters for two groups.
+
+```{r}
+library(bstatLogLik)
+
+# Set seed for reproducibility
+set.seed(1)
+
+# Simulate data from Weibull with two groups
+data <- data.frame(
+  x = c(sort(rweibull(100, shape = 2, scale = 5)),      # Group a: k=2, lambda=5
+        sort(rweibull(100, shape = 3, scale = 3))),      # Group b: k=3, lambda=3
+  f = factor(rep(c("a", "b"), c(100, 100))),            # Group factor
+  cy = c(seq(1, 100)/100, seq(1, 100)/100)              # CDF values for plotting
+)
+
+head(data)
+```
+
+### Data Summary
+
+```{r}
+summary(data)
+```
+
+---
+
+# Step 2: Parameter Initialization with `create_parameter_info()`
+
+The **`create_parameter_info()`** function is the key to bstatLogLik's flexibility. It:
+- Specifies initial parameter values
+- Sets which parameters to estimate vs. fix
+- Defines parameter bounds
+- Creates design matrices from formulas
+- Applies link functions (optional)
+
+## 2.1: Initialize Parameters from Data
+
+```{r}
+# Use Weibull initialization function to get starting values
+pars <- tapply(data$x, data$f, weibull_init)
+pars
+```
+
+```{r}
+# Convert to format needed by create_parameter_info()
+pars <- as.list(as.data.frame(do.call(rbind, pars)))
+pars
+```
+
+## 2.2: Create Parameter Info Object
+
+```{r}
+# Full model: group-specific k and lambda, fixed c
+param_info <- create_parameter_info(
+  parameter_values = pars,
+  estimate_flag = c(k = 1, lambda = 1, c = 0),  # c is fixed at 0
+  formulas = list(k = ~0 + f, lambda = ~0 + f, c = ~1),  # Group effects
+  lower_bounds = c(k = 0.01, lambda = 0.01, c = 0),
+  upper_bounds = c(k = 100, lambda = 100, c = 1),
+  model_data = data
+)
+```
+
+## 2.3: Inspect Parameter Structure
+
+```{r}
+# View parameter information
+print(summary(param_info))
+```
+
+```{r}
+# Check parameter values
+coef(param_info)
+```
+
+```{r}
+# View formulas
+formulas(param_info)
+```
+
+```{r}
+# Extract design matrices
+dm <- design_matrices(param_info)
+head(dm$k, 3)  # First 3 rows of k design matrix
+```
+
+---
+
+# Step 3: Model Fitting with `loglik()`
+
+Fit the full model with group-specific parameters for both shape (k) and scale (lambda).
+
+## 3.1: Fit Full Model
+
+```{r}
+fit4 <- loglik(
+  fun = weibull_pdf,           # Likelihood function
+  fun_vars = c(x = "x"),        # Variable name mapping
+  parameter_info = param_info,  # Parameter structure
+  data = data,
+  trace = TRUE                  # Show iteration progress
+)
+```
+
+## 3.2: Check Convergence
+
+```{r}
+# Basic summary
+print(fit4)
+```
+
+```{r}
+# Detailed summary with confidence intervals
+summary(fit4)
+```
+
+### ⚠️ Check for Boundary Parameters
+
+The improved version now warns if parameters converge to their bounds:
+
+```{r}
+# Detailed boundary inspection
+check_boundary_parameters(fit4)
+```
+
+---
+
+# Step 4: Fit Nested Models for Comparison
+
+Fit simpler models by constraining parameters to be constant across groups.
+
+## 4.1: Fit Models with Constraints
+
+```{r}
+# Model: lambda varies by group, k constant
+fit3_k <- loglik(
+  fun = weibull_pdf,
+  fun_vars = c(x = "x"),
+  parameter_info = create_parameter_info(param_info, 
+                                         formulas = list(lambda = ~1)),
+  data = data,
+  trace = FALSE  # Suppress iteration details
+)
+```
+
+```{r}
+# Model: k varies by group, lambda constant
+fit3_lambda <- loglik(
+  fun = weibull_pdf,
+  fun_vars = c(x = "x"),
+  parameter_info = create_parameter_info(param_info, 
+                                         formulas = list(k = ~1)),
+  data = data,
+  trace = FALSE
+)
+```
+
+```{r}
+# Model: both k and lambda constant across groups
+fit2 <- loglik(
+  fun = weibull_pdf,
+  fun_vars = c(x = "x"),
+  parameter_info = create_parameter_info(param_info, 
+                                         formulas = list(k = ~1, lambda = ~1)),
+  data = data,
+  trace = FALSE
+)
+```
+
+---
+
+# Step 5: Model Comparison
+
+## 5.1: Likelihood Ratio Test
+
+```{r}
+# Likelihood ratio tests
+lrt(fit4, fit2, fit3_lambda, fit3_k)
+```
+
+## 5.2: Compare Models by Information Criteria
+
+```{r}
+# Model comparison table
+compare_models(fit4, fit2, fit3_lambda, fit3_k)
+```
+
+### Interpretation
+
+The LRT compares nested models:
+- **fit4** (full): k and lambda vary by group - **lowest AIC** (best fit)
+- **fit3_k**: lambda varies, k constant
+- **fit3_lambda**: k varies, lambda constant  
+- **fit2** (simple): both k and lambda constant
+
+The p-values show fit4 provides significantly better fit than simpler models.
+
+---
+
+# Step 6: Extract & Inspect Results
+
+## 6.1: Model Coefficients
+
+```{r}
+# Extract estimated parameters
+coef(fit4)
+```
+
+## 6.2: Standard Errors & Confidence Intervals
+
+```{r}
+# Variance-covariance matrix (model-based)
+vcov(fit4)[1:4, 1:4]  # First 4x4 block
+```
+
+## 6.3: Information Criteria
+
+```{r}
+# Log-likelihood
+logLik(fit4)
+
+# AIC
+AIC(fit4, corrected = FALSE)  # Standard AIC
+
+# AICc (corrected for small samples)
+AIC(fit4, corrected = TRUE)
+
+# BIC
+BIC(fit4)
+```
+
+## 6.4: Robust (Sandwich) Covariance
+
+```{r}
+# Sandwich estimator for robust standard errors
+vcov_sandwich <- vcov_sandwich(fit4)
+vcov_sandwich[1:4, 1:4]
+```
+
+---
+
+# Step 7: Diagnostics
+
+## 7.1: Convergence Status
+
+```{r}
+# Check convergence
+converged(fit4)
+```
+
+## 7.2: Optimization Trace
+
+```{r}
+# View iteration history
+trace <- trace_history(fit4)
+head(trace, 10)  # First 10 iterations
+```
+
+## 7.3: Access Derivative Information
+
+```{r}
+# Hessian matrix
+hess <- hessian(fit4)
+dim(hess)
+
+# Gradient matrix (score matrix)
+grad_mat <- gradient_matrix(fit4)
+dim(grad_mat)  # Should be n_obs x n_params
+```
+
+---
+
+# Step 8: Visualization
+
+## 8.1: Fitted CDF with Confidence Intervals
+
+Extract parameter values and compute predictions:
+
+```{r}
+# Get fitted parameters as data frame
+pars_fitted <- as.data.frame(fit4$parameter_info)
+head(pars_fitted)
+```
+
+## 8.2: Plot with ggplot2
+
+```{r}
+library(ggplot2)
+
+# Generate predictions with confidence intervals
+p <- predict(fit4, se.fit = TRUE, nr_simulations = 250)
+
+# Combine with original data
+plot_data <- cbind(data, p)
+
+# Plot: CDF with 95% confidence band
+ggplot() +
+  geom_point(aes(x = x, y = cy, col = f), data = data, alpha = 0.5) +
+  geom_line(aes(x = x, y = fitted, col = f), data = plot_data, linewidth = 1) +
+  geom_ribbon(aes(x = x, ymin = lower.95, ymax = upper.95, fill = f), 
+              data = plot_data, alpha = 0.2) +
+  labs(title = "Weibull CDF with 95% Confidence Intervals",
+       x = "x", y = "CDF (Probability)",
+       color = "Group", fill = "Group") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+## 8.3: Predict Alternative Functions
+
+Predict **survival function** (complementary CDF):
+
+```{r}
+# Predict survival function for new data
+new_x <- seq(min(data$x), max(data$x), length.out = 50)
+new_data <- expand.grid(x = new_x, f = factor(c("a", "b")))
+
+p_survival <- predict(fit4, 
+                      se.fit = TRUE, 
+                      nr_simulations = 250,
+                      newdata = new_data,
+                      newfun = weibull_cdf)
+
+# Plot
+plot_surv <- cbind(new_data, p_survival)
+
+ggplot() +
+  geom_line(aes(x = x, y = fitted, col = f), data = plot_surv, linewidth = 1) +
+  geom_ribbon(aes(x = x, ymin = lower.95, ymax = upper.95, fill = f), 
+              data = plot_surv, alpha = 0.2) +
+  labs(title = "Weibull Survival Function",
+       x = "x", y = "Survival Probability",
+       color = "Group", fill = "Group") +
+  theme_minimal()
+```
+
+---
+
+# Step 9: Complete Analysis Workflow Summary
+
+Here's the complete workflow in one place:
+
+```{r, eval=FALSE}
+library(bstatLogLik)
+library(ggplot2)
+
+# 1. DATA
+set.seed(1)
+data <- data.frame(
+  x = c(sort(rweibull(100, 2, 5)), sort(rweibull(100, 3, 3))),
+  f = factor(rep(c("a", "b"), c(100, 100))),
+  cy = c(seq(1, 100)/100, seq(1, 100)/100)
+)
+
+# 2. INITIALIZATION
+pars <- tapply(data$x, data$f, weibull_init)
+pars <- as.list(as.data.frame(do.call(rbind, pars)))
+
+param_info <- create_parameter_info(
+  parameter_values = pars,
+  estimate_flag = c(k = 1, lambda = 1, c = 0),
+  formulas = list(k = ~0 + f, lambda = ~0 + f, c = ~1),
+  model_data = data
+)
+
+# 3. FITTING
+fit4 <- loglik(weibull_pdf, c(x = "x"), param_info, data)
+fit2 <- loglik(weibull_pdf, c(x = "x"), 
+               create_parameter_info(param_info, 
+                                     formulas = list(k = ~1, lambda = ~1)), 
+               data)
+
+# 4. COMPARISON
+lrt(fit4, fit2)
+compare_models(fit4, fit2)
+
+# 5. DIAGNOSTICS
+summary(fit4)
+check_boundary_parameters(fit4)
+converged(fit4)
+
+# 6. RESULTS
+coef(fit4)
+vcov(fit4)
+AIC(fit4)
+
+# 7. VISUALIZATION
+p <- predict(fit4, se.fit = TRUE, nr_simulations = 250)
+plot_data <- cbind(data, p)
+
+ggplot() +
+  geom_point(aes(x = x, y = cy, col = f), data = data, alpha = 0.5) +
+  geom_line(aes(x = x, y = fitted, col = f), data = plot_data) +
+  geom_ribbon(aes(x = x, ymin = lower.95, ymax = upper.95, fill = f), 
+              data = plot_data, alpha = 0.2) +
+  labs(title = "Fitted Weibull CDF with 95% CI",
+       x = "x", y = "Cumulative Probability") +
+  theme_minimal()
+```
+
+---
+
+# Advanced Topics
+
+## Constrained Parameter Spaces
+
+Use compositional updates to modify specific model components:
+
+```{r, eval=FALSE}
+# Change only the k formula, keep everything else
+param_info_new <- create_parameter_info(
+  param_info,
+  formulas = list(k = ~1 + f)  # Linear contrast instead of group means
+)
+```
+
+## Link Functions
+
+Transform parameters to different scales:
+
+```{r, eval=FALSE}
+param_info_log <- create_parameter_info(
+  pars,
+  formulas = list(k = ~0 + f, lambda = ~0 + f, c = ~1),
+  link_functions = c(k = "log", lambda = "log", c = "identity"),
+  model_data = data
+)
+
+fit_log <- loglik(weibull_pdf, c(x = "x"), param_info_log, data)
+```
+
+## Bootstrap Parameter Uncertainty
+
+Generate bootstrap samples of parameter estimates:
+
+```{r, eval=FALSE}
+# Simulate from parameter distribution
+vcov_mat <- vcov(fit4)
+samples <- sample_parameter_info(param_info, n = 100, vcov = vcov_mat)
+
+# samples[[1]] contains fitted parameters
+# samples[[2:101]] contain bootstrap samples
+```
+
+---
+
+# Troubleshooting
+
+## Parameters Converging to Bounds
+
+If you see warnings about parameters at boundaries:
+
+```{r, eval=FALSE}
+# Check which parameters are problematic
+check_boundary_parameters(fit4)
+
+# Solutions:
+# 1. Loosen bounds
+# 2. Improve starting values
+# 3. Check model specification
+# 4. Use informative priors/constraints
+```
+
+## Convergence Issues
+
+```{r, eval=FALSE}
+# Check convergence details
+print(fit4)
+summary(fit4)
+
+# Inspect optimization trace
+trace_history(fit4)
+
+# Try different optimization method
+control <- loglik_control(method = "Levenberg")  # or "Marquardt"
+fit_alt <- loglik(weibull_pdf, c(x = "x"), param_info, data, control = control)
+```
+
+## Singular Hessian
+
+```{r, eval=FALSE}
+# Use robust (sandwich) covariance
+vcov_sandwich(fit4)
+
+# Or use generalized inverse
+# (controlled via loglik_control)
+```
+
+---
+
+# Further Reading
+
+- See individual function help pages: `?loglik`, `?create_parameter_info`, `?loglik_control`
+- For model selection theory: Burnham & Anderson (2002) "Model Selection and Multimodel Inference"
+- For sandwich covariance: Huber (1967), White (1980)
+
+---
+
+# Session Information
+
+```{r}
+sessionInfo()
+```
+

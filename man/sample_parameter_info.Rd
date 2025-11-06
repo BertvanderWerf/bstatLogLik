@@ -2,13 +2,63 @@
 % Please edit documentation in R/parameter_info_methods.R
 \name{sample_parameter_info}
 \alias{sample_parameter_info}
-\title{Title}
+\title{Sample from parameter_info distribution}
 \usage{
 sample_parameter_info(parameter_info, n, vcov)
 }
 \arguments{
-\item{vcov}{}
+\item{parameter_info}{A \code{parameter_info} object.}
+
+\item{n}{Integer, number of samples to draw from the parameter distribution.
+Must be >= 1.}
+
+\item{vcov}{Matrix, variance-covariance matrix for parameter estimates.
+Should be square and symmetric. Can be computed from a fitted model
+using \code{vcov()} or bootstrap methods.}
+}
+\value{
+A list of length \code{n + 1}. Each element is a list (similar to
+\code{parameter_info$parameter_values}) containing sampled parameter values.
+The first element (named "fitted") contains the original parameter values.
+Subsequent elements are named "simulation_1", "simulation_2", etc.
 }
 \description{
-Title
+Generates samples from a multivariate normal distribution centered at the
+parameter values in a \code{parameter_info} object, using a provided
+variance-covariance matrix.
+}
+\details{
+This function is useful for bootstrapping and uncertainty quantification:
+\itemize{
+\item Samples parameter values from a multivariate normal distribution
+\item Respects the \code{estimate_flag} (only samples estimated parameters)
+\item Returns a list of \code{parameter_info}-like structures for each sample
+\item Includes the original fitted parameters as the first element
+}
+
+The variance-covariance matrix should correspond to the estimated parameters.
+If the matrix is smaller than the number of parameters, it is padded with zeros
+for fixed parameters.
+}
+\examples{
+# Create parameter info
+df <- expand.grid(Group = c("A", "B"))
+info <- create_parameter_info(
+  parameter_values = c(k = 2, lambda = 10, c = 0),
+  estimate_flag = c(k = 1, lambda = 1, c = 0),
+  model_data = df
+)
+
+# Create a simple variance-covariance matrix
+vcov_mat <- matrix(c(0.1, 0.02, 0.02, 0.15), nrow = 2)
+
+# Sample parameters
+samples <- sample_parameter_info(info, n = 100, vcov = vcov_mat)
+
+# Access fitted parameters
+samples$fitted
+
+# Access a specific simulation
+samples$simulation_1
+
 }

@@ -58,12 +58,12 @@ bread.loglik <- function(object, ...) {
 #' @param object Object of class "loglik".
 #' @return Sandwich variance-covariance matrix.
 #' @export
-sandwich <- function(object, ...) {
-  UseMethod("sandwich")
+vcov_sandwich <- function(object, ...) {
+  UseMethod("vcov_sandwich")
 }
 
 #' @export
-sandwich.loglik <- function(object) {
+vcov_sandwich.loglik <- function(object) {
   bread <- bread.loglik(object)
   meat <- meat.loglik(object)
 
