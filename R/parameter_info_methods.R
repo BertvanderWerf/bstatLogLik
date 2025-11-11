@@ -598,10 +598,10 @@ print.parameter_info <- function(object, ...) {
     )
   }
 
-  cat("\\n=== parameter_info object ===\\n\\n")
+  cat("\n=== parameter_info object ===\n\n")
 
   # Display parameter names and values
-  cat("Parameters (", length(object$parameter_values), " total):\\n", sep = "")
+  cat("Parameters (", length(object$parameter_values), " total):\n", sep = "")
 
   pars <- unlist(object$parameter_values)
   estimate_flags <- unlist(object$estimate_flag)
@@ -619,23 +619,23 @@ print.parameter_info <- function(object, ...) {
 
   print(df_print, digits = 4)
 
-  cat("\\nSeparator: \"", object$sep, "\"\\n", sep = "")
+  cat("\nSeparator: \"", object$sep, "\"\n", sep = "")
 
   # Show number of estimated vs fixed
   n_est <- sum(as.logical(estimate_flags))
   n_fixed <- length(estimate_flags) - n_est
 
   cat(
-    "  Estimated parameters: ", n_est, "\\n",
-    "  Fixed parameters: ", n_fixed, "\\n",
+    "  Estimated parameters: ", n_est, "\n",
+    "  Fixed parameters: ", n_fixed, "\n",
     sep = ""
   )
 
   # Show design matrix info if present
   if (!is.null(object$design_matrices[[1]])) {
-    cat("\\nDesign matrices present for all parameters\\n")
+    cat("\nDesign matrices present for all parameters\n")
   } else {
-    cat("\\nNo design matrices (model_data not provided)\\n")
+    cat("\nNo design matrices (model_data not provided)\n")
   }
 
   invisible(object)

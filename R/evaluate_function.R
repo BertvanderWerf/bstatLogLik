@@ -61,7 +61,7 @@ evaluate_function <- function(
 
   # Symbolic differentiation and function construction
   func_body <- paste(deparse(Deriv::Deriv(body(fun), nderiv = 0, cache.exp = FALSE)), collapse = "\n")
-  func_text <- sprintf("function() {%s}", func_body)
+  func_text <- sprintf("function() { local({ %s}) }", func_body)
 
   # Parameter usage check
   unused <- param_names[!sapply(param_names, function(x) grepl(sprintf("\\b%s\\b", x), func_text))]
@@ -85,6 +85,20 @@ evaluate_function <- function(
   func <- eval(parse(text = func_text))
   environment(func) <- new.env()
 
+  # add default values for parameters added 11-11-2025
+  fun_args <- formals(args(fun))
+  has_value <- !sapply(fun_args, rlang::is_missing)
+  if (any(has_value)) {
+    for (i in seq_len(length(has_value))) {
+      if (has_value[i]) {
+        assign(names(has_value)[i],
+               eval(fun_args[[i]], environment(func)),
+               environment(func))
+      }
+    }
+  }
+
+
   # Bind parameters (multiply through design matrix if present)
   params <- parameter_info$parameter_values
   for (i in seq_len(n_params)) {
@@ -92,6 +106,9 @@ evaluate_function <- function(
       params[[i]] <- as.vector(params[[i]] %*% t(parameter_info$design_matrices[[i]]))
     }
     assign(param_names[i], params[[i]], envir = environment(func))
+    if (param_names[i] %in% names(has_value)) {
+      has_value[param_names[i]] <- TRUE
+    }
   }
 
   # Bind variables from data
@@ -104,6 +121,15 @@ evaluate_function <- function(
       name=names(vars)[i]
     }
     assign(name, data[,vars[i]], envir=environment(func))
+    if (name %in% names(has_value)) {
+      has_value[name] <- TRUE
+    }
+  }
+
+  if (!(all(has_value))) {
+    stop(sprintf("the variable or parameter %s needed in the function has not been defined yet.",
+                 paste0("'", paste(names(has_value)[!has_value], collapse="', '"), "'")),
+         call. = FALSE)
   }
 
   # Evaluate and return result

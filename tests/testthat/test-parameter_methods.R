@@ -2,23 +2,25 @@
 # Note: These tests assume the bstatUtils package is available with
 # update_by_name() and assign_list_circular() functions
 
-describe(\"create_parameter_info\", {
+describe("create_parameter_info", {
 
   # ============================================================================
   # Test 1: Basic parameter creation with defaults
   # ============================================================================
   #
-  it(\"creates basic parameter_info object with minimal inputs\", {
+  it("creates basic parameter_info object with minimal inputs", {
     pars <- c(k = 2, lambda = 10)
-    info <- create_parameter_info(parameter_values = pars)
+    expect_warning(
+    info <- create_parameter_info(parameter_values = pars),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
-    expect_s3_class(info, \"parameter_info\")
+    expect_s3_class(info, "parameter_info")
     expect_named(info, c(
-      \"parameter_values\", \"lower_bounds\", \"upper_bounds\",
-      \"estimate_flag\", \"link_functions\", \"formulas\",
-      \"design_matrices\", \"model_data\", \"sep\"
+      "parameter_values", "lower_bounds", "upper_bounds",
+      "estimate_flag", "link_functions", "formulas",
+      "design_matrices", "model_data", "sep"
     ))
-    expect_equal(names(info$parameter_values), c(\"k\", \"lambda\"))
+    expect_equal(names(info$parameter_values), c("k", "lambda"))
     expect_equal(length(info$parameter_values), 2)
   })
 
@@ -26,9 +28,11 @@ describe(\"create_parameter_info\", {
   # Test 2: Parameter values are properly stored and named
   # ============================================================================
   #
-  it(\"preserves parameter names and values\", {
+  it("preserves parameter names and values", {
     pars <- c(k = 2.5, lambda = 10.3, c = 0.1)
-    info <- create_parameter_info(parameter_values = pars)
+    expect_warning(
+    info <- create_parameter_info(parameter_values = pars),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
     expect_equal(info$parameter_values$k[[1]], 2.5)
     expect_equal(info$parameter_values$lambda[[1]], 10.3)
@@ -39,9 +43,11 @@ describe(\"create_parameter_info\", {
   # Test 3: Default bounds are -Inf and Inf
   # ============================================================================
   #
-  it(\"applies default bounds (±Inf) when not specified\", {
+  it("applies default bounds (?Inf) when not specified", {
     pars <- c(k = 2, lambda = 10)
-    info <- create_parameter_info(parameter_values = pars)
+    expect_warning(
+    info <- create_parameter_info(parameter_values = pars),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
     expect_true(all(sapply(info$lower_bounds, function(x) all(is.infinite(x) & x < 0))))
     expect_true(all(sapply(info$upper_bounds, function(x) all(is.infinite(x) & x > 0))))
@@ -51,13 +57,15 @@ describe(\"create_parameter_info\", {
   # Test 4: Custom bounds are applied correctly
   # ============================================================================
   #
-  it(\"applies custom bounds correctly\", {
+  it("applies custom bounds correctly", {
     pars <- c(k = 2, lambda = 10, c = 0)
+    expect_warning(
     info <- create_parameter_info(
       parameter_values = pars,
       lower_bounds = c(k = 0, lambda = 0, c = -1),
       upper_bounds = c(k = Inf, lambda = 100, c = 1)
-    )
+    ),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
     expect_equal(info$lower_bounds$k, 0)
     expect_equal(info$lower_bounds$lambda, 0)
@@ -71,9 +79,11 @@ describe(\"create_parameter_info\", {
   # Test 5: Estimate flags default to 1 (estimate all)
   # ============================================================================
   #
-  it(\"defaults to estimate all parameters (flag = 1)\", {
+  it("defaults to estimate all parameters (flag = 1)", {
     pars <- c(k = 2, lambda = 10)
-    info <- create_parameter_info(parameter_values = pars)
+    expect_warning(
+    info <- create_parameter_info(parameter_values = pars),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
     expect_true(all(sapply(info$estimate_flag, function(x) all(x == 1))))
   })
@@ -82,12 +92,14 @@ describe(\"create_parameter_info\", {
   # Test 6: Estimate flags can be set to fix parameters
   # ============================================================================
   #
-  it(\"correctly sets estimate flags (1 for estimate, 0 for fix)\", {
+  it("correctly sets estimate flags (1 for estimate, 0 for fix)", {
     pars <- c(k = 2, lambda = 10, c = 0)
+    expect_warning(
     info <- create_parameter_info(
       parameter_values = pars,
       estimate_flag = c(k = 1, lambda = 1, c = 0)
-    )
+    ),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
     expect_equal(info$estimate_flag$k, 1)
     expect_equal(info$estimate_flag$lambda, 1)
@@ -98,22 +110,25 @@ describe(\"create_parameter_info\", {
   # Test 7: Default formulas are intercept-only (~1)
   # ============================================================================
   #
-  it(\"defaults to intercept-only formulas (~1)\", {
+  it("defaults to intercept-only formulas (~1)", {
     pars <- c(k = 2, lambda = 10)
-    info <- create_parameter_info(parameter_values = pars)
+    expect_warning(
+    info <- create_parameter_info(parameter_values = pars),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
-    expect_true(all(sapply(info$formulas, function(f) {
-      identical(f, ~1)
-    })))
+    info$formulas
+    expect_true(all(sapply(info$formulas, function(f)
+      (f== ~1)
+    )))
   })
 
   # ============================================================================
   # Test 8: Custom formulas are applied correctly
   # ============================================================================
   #
-  it(\"applies custom formulas to each parameter\", {
+  it("applies custom formulas to each parameter", {
     pars <- c(k = 2, lambda = 10, c = 0)
-    df <- expand.grid(Group = c(\"A\", \"B\"), Rep = c(1, 2))
+    df <- expand.grid(Group = c("A", "B"), Rep = c(1, 2))
 
     info <- create_parameter_info(
       parameter_values = pars,
@@ -130,9 +145,9 @@ describe(\"create_parameter_info\", {
   # Test 9: Design matrices are created from formulas
   # ============================================================================
   #
-  it(\"generates design matrices from formulas and model_data\", {
+  it("generates design matrices from formulas and model_data", {
     pars <- c(k = 2, lambda = 10)
-    df <- expand.grid(Group = c(\"A\", \"B\"))
+    df <- expand.grid(Group = c("A", "B"))
 
     info <- create_parameter_info(
       parameter_values = pars,
@@ -150,9 +165,9 @@ describe(\"create_parameter_info\", {
   # Test 10: Parameter values are expanded to match design matrix columns
   # ============================================================================
   #
-  it(\"expands parameter values to match design matrix dimensions\", {
+  it("expands parameter values to match design matrix dimensions", {
     pars <- c(k = 2, lambda = 10)
-    df <- expand.grid(Group = c(\"A\", \"B\"))
+    df <- expand.grid(Group = c("A", "B"))
 
     info <- create_parameter_info(
       parameter_values = pars,
@@ -170,37 +185,41 @@ describe(\"create_parameter_info\", {
   # Test 11: Default link functions are 'identity'
   # ============================================================================
   #
-  it(\"defaults to identity link functions\", {
+  it("defaults to identity link functions", {
     pars <- c(k = 2, lambda = 10)
-    info <- create_parameter_info(parameter_values = pars)
+    expect_warning(
+    info <- create_parameter_info(parameter_values = pars),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
-    expect_true(all(sapply(info$link_functions, function(x) x == \"identity\")))
+    expect_true(all(sapply(info$link_functions, function(x) x == "identity")))
   })
 
   # ============================================================================
   # Test 12: Custom link functions are applied
   # ============================================================================
   #
-  it(\"applies custom link functions\", {
+  it("applies custom link functions", {
     pars <- c(k = 2, lambda = 10, c = 0)
+    expect_warning(
     info <- create_parameter_info(
       parameter_values = pars,
-      link_functions = c(\"log\", \"log\", \"identity\")
-    )
+      link_functions = c("log", "log", "identity")
+    ),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
-    expect_equal(info$link_functions$k, \"log\")
-    expect_equal(info$link_functions$lambda, \"log\")
-    expect_equal(info$link_functions$c, \"identity\")
+    expect_equal(info$link_functions$k, "log")
+    expect_equal(info$link_functions$lambda, "log")
+    expect_equal(info$link_functions$c, "identity")
   })
 
   # ============================================================================
   # Test 13: Error if parameter_values is not named
   # ============================================================================
   #
-  it(\"raises error if parameter_values are not named\", {
+  it("raises error if parameter_values are not named", {
     expect_error(
       create_parameter_info(parameter_values = c(2, 10)),
-      \"parameter_values must be a named vector\"
+      "parameter_values must be a named vector"
     )
   })
 
@@ -208,10 +227,10 @@ describe(\"create_parameter_info\", {
   # Test 14: Error if parameter names are duplicated
   # ============================================================================
   #
-  it(\"raises error if parameter names are duplicated\", {
+  it("raises error if parameter names are duplicated", {
     expect_error(
       create_parameter_info(parameter_values = c(k = 2, k = 10)),
-      \"parameter_values must be a named vector\"
+      "parameter_values must be a named vector"
     )
   })
 
@@ -219,34 +238,40 @@ describe(\"create_parameter_info\", {
   # Test 15: Error if argument lengths don't match number of parameters
   # ============================================================================
   #
-  it(\"raises error if estimate_flag length doesn't match parameters\", {
+  it("raises error if estimate_flag length doesn't match parameters", {
     pars <- c(k = 2, lambda = 10, c = 0)
+    expect_warning(
     expect_error(
       create_parameter_info(
         parameter_values = pars,
         estimate_flag = c(1, 0)  # Only 2 values for 3 parameters
       ),
-      \"not equal to the number of parameters\"
-    )
+      "length of argument is not equal to the number of parameters. Expected 3 but got 2"
+    ),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
   })
 
   # ============================================================================
   # Test 16: Compositional update - preserve unmodified components
   # ============================================================================
   #
-  it(\"preserves unmodified components when updating existing parameter_info\", {
+  it("preserves unmodified components when updating existing parameter_info", {
     pars <- c(k = 2, lambda = 10)
+    expect_warning(
     info1 <- create_parameter_info(
       parameter_values = pars,
       estimate_flag = c(k = 1, lambda = 0),
       lower_bounds = c(k = 0, lambda = 1)
-    )
+    ),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
     # Update only the upper bounds
+    expect_warning(
     info2 <- create_parameter_info(
       parameter_values = info1,
       upper_bounds = c(k = 100, lambda = 200)
-    )
+    ),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
     # Check that other components are preserved
     expect_equal(info2$estimate_flag$k, 1)
@@ -262,9 +287,9 @@ describe(\"create_parameter_info\", {
   # Test 17: Compositional update - modify formula
   # ============================================================================
   #
-  it(\"allows compositional formula updates\", {
+  it("allows compositional formula updates", {
     pars <- c(k = 2, lambda = 10)
-    df <- expand.grid(Group = c(\"A\", \"B\"))
+    df <- expand.grid(Group = c("A", "B"))
 
     info1 <- create_parameter_info(
       parameter_values = pars,
@@ -286,11 +311,11 @@ describe(\"create_parameter_info\", {
   # Test 18: Warning when model_data is NULL
   # ============================================================================
   #
-  it(\"warns when model_data is NULL\", {
+  it("warns when model_data is NULL", {
     pars <- c(k = 2, lambda = 10)
     expect_warning(
       create_parameter_info(parameter_values = pars, model_data = NULL),
-      \"model_data is NULL\"
+      "model_data is NULL"
     )
   })
 
@@ -298,9 +323,11 @@ describe(\"create_parameter_info\", {
   # Test 19: Design matrices are NULL when model_data is NULL
   # ============================================================================
   #
-  it(\"creates NULL design matrices when model_data is NULL\", {
+  it("creates NULL design matrices when model_data is NULL", {
     pars <- c(k = 2, lambda = 10)
-    info <- create_parameter_info(parameter_values = pars, model_data = NULL)
+    expect_warning(
+    info <- create_parameter_info(parameter_values = pars, model_data = NULL),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
     expect_true(all(sapply(info$design_matrices, is.null)))
   })
@@ -309,11 +336,13 @@ describe(\"create_parameter_info\", {
   # Test 20: Separator is correctly stored
   # ============================================================================
   #
-  it(\"stores custom separator in parameter_info object\", {
+  it("stores custom separator in parameter_info object", {
     pars <- c(k = 2, lambda = 10)
-    info <- create_parameter_info(parameter_values = pars, sep = \"_\")
+    expect_warning(
+    info <- create_parameter_info(parameter_values = pars, sep = "_"),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
-    expect_equal(info$sep, \"_\")
+    expect_equal(info$sep, "_")
   })
 })
 
@@ -321,65 +350,71 @@ describe(\"create_parameter_info\", {
 # Summary method tests
 # ============================================================================
 #
-describe(\"summary.parameter_info\", {
+describe("summary.parameter_info", {
 
   # ============================================================================
   # Test 21: Summary returns list with info and parameters
   # ============================================================================
   #
-  it(\"returns a list with 'info' and 'parameters' components\", {
+  it("returns a list with 'info' and 'parameters' components", {
     pars <- c(k = 2, lambda = 10)
-    info <- create_parameter_info(parameter_values = pars)
+    expect_warning(
+    info <- create_parameter_info(parameter_values = pars),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
     result <- summary(info)
 
-    expect_type(result, \"list\")
-    expect_named(result, c(\"info\", \"parameters\"))
+    expect_type(result, "list")
+    expect_named(result, c("info", "parameters"))
   })
 
   # ============================================================================
   # Test 22: Summary info includes formulas with link functions
   # ============================================================================
   #
-  it(\"includes formulas with link functions in info\", {
+  it("includes formulas with link functions in info", {
     pars <- c(k = 2, lambda = 10)
+    expect_warning(
     info <- create_parameter_info(
       parameter_values = pars,
-      link_functions = c(\"log\", \"identity\")
-    )
+      link_functions = c("log", "identity")
+    ),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
     result <- summary(info)
 
-    expect_true(any(grepl(\"log\", result$info$formula)))
-    expect_true(any(grepl(\"identity\", result$info$formula)))
+    expect_true(any(grepl("log", result$info$formula)))
+    expect_true(any(grepl("identity", result$info$formula)))
   })
 
   # ============================================================================
   # Test 23: Summary parameters include all components
   # ============================================================================
   #
-  it(\"includes all parameter components in parameters table\", {
+  it("includes all parameter components in parameters table", {
     pars <- c(k = 2, lambda = 10)
+    expect_warning(
     info <- create_parameter_info(
       parameter_values = pars,
       estimate_flag = c(k = 1, lambda = 0),
       lower_bounds = c(k = 0, lambda = 1),
       upper_bounds = c(k = 100, lambda = 200)
-    )
+    ),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
     result <- summary(info)
 
     params <- result$parameters
-    expect_true(\"parameter_values\" %in% colnames(params))
-    expect_true(\"estimate_flag\" %in% colnames(params))
-    expect_true(\"lower_bounds\" %in% colnames(params))
-    expect_true(\"upper_bounds\" %in% colnames(params))
+    expect_true("parameter_values" %in% colnames(params))
+    expect_true("estimate_flag" %in% colnames(params))
+    expect_true("lower_bounds" %in% colnames(params))
+    expect_true("upper_bounds" %in% colnames(params))
   })
 
   # ============================================================================
   # Test 24: Summary with formulas shows expanded parameters
   # ============================================================================
   #
-  it(\"shows expanded parameter names for design matrix columns\", {
+  it("shows expanded parameter names for design matrix columns", {
     pars <- c(k = 2, lambda = 10)
-    df <- expand.grid(Group = c(\"A\", \"B\"))
+    df <- expand.grid(Group = c("A", "B"))
 
     info <- create_parameter_info(
       parameter_values = pars,
@@ -389,7 +424,7 @@ describe(\"summary.parameter_info\", {
     result <- summary(info)
 
     # k should have 2 rows (GroupA and GroupB)
-    k_rows <- result$parameters[result$parameters$parameter == \"k\", ]
+    k_rows <- result$parameters[result$parameters$parameter == "k", ]
     expect_equal(nrow(k_rows), 2)
   })
 
@@ -399,38 +434,42 @@ describe(\"summary.parameter_info\", {
 # Edge case tests
 # ============================================================================
 #
-describe(\"Edge cases\", {
+describe("Edge cases", {
 
   # ============================================================================
   # Test 25: Single parameter
   # ============================================================================
   #
-  it(\"handles single parameter correctly\", {
-    info <- create_parameter_info(parameter_values = c(k = 2))
+  it("handles single parameter correctly", {
+    expect_warning(
+    info <- create_parameter_info(parameter_values = c(k = 2)),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
     expect_equal(length(info$parameter_values), 1)
-    expect_named(info$parameter_values, \"k\")
+    expect_named(info$parameter_values, "k")
   })
 
   # ============================================================================
   # Test 26: Many parameters
   # ============================================================================
   #
-  it(\"handles many parameters correctly\", {
-    pars <- setNames(1:10, paste0(\"p\", 1:10))
-    info <- create_parameter_info(parameter_values = pars)
+  it("handles many parameters correctly", {
+    pars <- setNames(1:10, paste0("p", 1:10))
+    expect_warning(
+    info <- create_parameter_info(parameter_values = pars),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
     expect_equal(length(info$parameter_values), 10)
-    expect_equal(names(info$parameter_values), paste0(\"p\", 1:10))
+    expect_equal(names(info$parameter_values), paste0("p", 1:10))
   })
 
   # ============================================================================
   # Test 27: Complex formula with interactions
   # ============================================================================
   #
-  it(\"handles complex formulas with interactions\", {
+  it("handles complex formulas with interactions", {
     pars <- c(k = 2)
-    df <- expand.grid(A = c(\"a1\", \"a2\"), B = c(\"b1\", \"b2\"))
+    df <- expand.grid(A = c("a1", "a2"), B = c("b1", "b2"))
 
     info <- create_parameter_info(
       parameter_values = pars,
@@ -446,9 +485,9 @@ describe(\"Edge cases\", {
   # Test 28: Parameter values recycled when design matrix larger
   # ============================================================================
   #
-  it(\"recycles scalar parameter values to match design matrix size\", {
+  it("recycles scalar parameter values to match design matrix size", {
     pars <- c(k = 2)  # Single value
-    df <- expand.grid(Group = c(\"A\", \"B\", \"C\"))
+    df <- expand.grid(Group = c("A", "B", "C"))
 
     info <- create_parameter_info(
       parameter_values = pars,
@@ -466,13 +505,15 @@ describe(\"Edge cases\", {
   # Test 29: Zero bounds are valid
   # ============================================================================
   #
-  it(\"allows zero as a bound value\", {
+  it("allows zero as a bound value", {
     pars <- c(k = 2, lambda = 10)
+    expect_warning(
     info <- create_parameter_info(
       parameter_values = pars,
       lower_bounds = c(k = 0, lambda = 0),
       upper_bounds = c(k = 0, lambda = Inf)
-    )
+    ),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
     expect_equal(info$lower_bounds$k, 0)
     expect_equal(info$upper_bounds$k, 0)
@@ -482,9 +523,11 @@ describe(\"Edge cases\", {
   # Test 30: Negative parameter values
   # ============================================================================
   #
-  it(\"accepts negative parameter values\", {
+  it("accepts negative parameter values", {
     pars <- c(k = -2.5, lambda = -10)
-    info <- create_parameter_info(parameter_values = pars)
+    expect_warning(
+    info <- create_parameter_info(parameter_values = pars),
+    "model_data is NULL; no design matrices are created. Pass model_data to expand parameters via formulas.")
 
     expect_equal(info$parameter_values$k, -2.5)
     expect_equal(info$parameter_values$lambda, -10)

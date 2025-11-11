@@ -63,5 +63,8 @@ usethis::use_test("loglik_inference")
 usethis::use_r("parameter_info_methods")
 usethis::use_test("parameter_methods")
 
+usethis::use_r("set_parameter_values")
+usethis::use_test("set_parameter_values")
+
 
 #usethis::rename_files()

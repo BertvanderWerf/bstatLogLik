@@ -20,3 +20,10 @@ test_that("error raised for missing parameters", {
     evaluate_function(function(x) x + b, vars = c(x = "x"), parameter_info = parameter_info, data = data.frame(x = 1:3))
   )
 })
+
+test_that("error raised for missing variable", {
+  parameter_info <- create_parameter_info(c(b = 2), model_data = data.frame(x = 1:3))
+  expect_error(
+    evaluate_function(function(x) x + b, vars = c(y = "x"), parameter_info = parameter_info, data = data.frame(x = 1:3))
+  )
+})

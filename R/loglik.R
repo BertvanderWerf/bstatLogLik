@@ -278,9 +278,9 @@ loglik <- function(fun, fun_vars=NULL, parameter_info, data, trace = TRUE,
   # ============================================================================
 
   if (is.null(n)) {
-    ln_lik_i <- paste0("function() {log(",
+    ln_lik_i <- paste0("function() { log(",
                        paste(deparse(Deriv::Deriv(body(fun), "x", nderiv = 0, cache.exp = FALSE)), collapse = ""),
-                       ")}")
+                       ")} " )
   } else {
     ln_lik_i <- paste0("function() { n * log(",
                        paste(deparse(Deriv::Deriv(body(fun), "x", nderiv = 0, cache.exp = FALSE)), collapse = ""),
@@ -313,7 +313,21 @@ loglik <- function(fun, fun_vars=NULL, parameter_info, data, trace = TRUE,
   # Compute derivatives
   derivs <- Deriv::Deriv(f = ln_lik_i, x = parnames[cond],
                          cache.exp = TRUE, nderiv = nderiv, combine = "cbind")
+
   environment(derivs) <- new.env()
+
+  # add default values for parameters added 11-11-2025
+  fun_args <- formals(args(fun))
+  has_value <- !sapply(fun_args, rlang::is_missing)
+  if (any(has_default)) {
+    for (i in seq_len(length(has_value))) {
+      if (has_value[i]) {
+        assign(names(has_value)[i],
+               eval(fun_args[[i]], environment(derivs)),
+               environment(derivs))
+      }
+    }
+  }
 
   # Add parameters to derivative environment
   pars <- parameter_info$parameter_values
@@ -322,6 +336,9 @@ loglik <- function(fun, fun_vars=NULL, parameter_info, data, trace = TRUE,
       pars[[i]] <- c(pars[[i]] %*% t(parameter_info$design_matrices[[i]]))
     }
     assign(parnames[i], pars[[i]], envir = environment(derivs))
+    if (parnames[i] %in% names(has_value)) {
+      has_value[parnames[i]] <- TRUE
+    }
   }
 
   # Add variables to derivative environment
@@ -332,6 +349,15 @@ loglik <- function(fun, fun_vars=NULL, parameter_info, data, trace = TRUE,
       names(result$vars)[i]
     }
     assign(var_name, result$data[[result$vars[i]]], envir = environment(derivs))
+    if (var_name %in% names(has_value)) {
+      has_value[var_name] <- TRUE
+    }
+  }
+
+  if (!(all(has_value))) {
+    stop(sprintf("the variable or parameter %s needed in the function has not been defined yet.",
+                 paste0("'", paste(names(has_value)[!has_value], collapse="', '"), "'")),
+         call. = FALSE)
   }
 
   # --- Initial evaluation ---

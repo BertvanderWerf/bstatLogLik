@@ -37,7 +37,7 @@ and a warning is issued.}
 \item{link_functions}{List or character vector of link function names.
 If NULL, defaults to 'identity'. Supports character strings or function objects.}
 
-\item{sep}{Separator for parameter names in composite parameter lists (default \".\").}
+\item{sep}{Separator for parameter names in composite parameter lists (default ".").}
 }
 \value{
 An S3 object of class \code{parameter_info} with the following structure:
@@ -99,7 +99,7 @@ info3 <- create_parameter_info(
 info4 <- create_parameter_info(
   parameter_values = c(k = 2, lambda = 10, c = 0),
   formulas = list(k = ~Capital, lambda = ~1, c = ~1),
-  link_functions = c(\"log\", \"log\", \"identity\"),
+  link_functions = c("log", "log", "identity"),
   model_data = df
 )
 

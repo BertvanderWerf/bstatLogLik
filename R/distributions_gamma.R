@@ -36,7 +36,7 @@ NULL
 #' @export
 gamma_pdf <- function(x, alpha, beta) {
   # Ensure x is non-negative
-  (beta^alpha / gamma(alpha)) * (x^(alpha - 1)) * exp(-beta * x)
+  ifelse(x<0, 0, (beta^alpha / gamma(alpha)) * (x^(alpha - 1)) * exp(-beta * x))
   # result <- ifelse(x<0, 0, result)
   # result
 }
@@ -59,7 +59,7 @@ gamma_pdf <- function(x, alpha, beta) {
 #' @export
 gamma_cdf <- function(x, alpha, beta) {
   # Use built-in pgamma with shape and rate parameterization
-  pgamma(x, shape = alpha, rate = beta)
+  ifelse(x<0, 0, pgamma(x, shape = alpha, rate = beta))
 }
 
 #' Gamma Hazard Function
@@ -220,7 +220,7 @@ drule[['gamma_pdf']] <- lapply(
 )
 names(drule[['gamma_pdf']]) <- c('x', 'alpha', 'beta')
 
-# Compute derivatives for CDF (uses built-in pgamma, so derivatives are approximate)
+#Compute derivatives for CDF (uses built-in pgamma, so derivatives are approximate)
 # drule[['gamma_cdf']] <- lapply(
 #   c('x', 'alpha', 'beta'),
 #   function(var) Deriv::Deriv(body(gamma_cdf), var, cache.exp = FALSE)

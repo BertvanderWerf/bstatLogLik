@@ -47,8 +47,8 @@ test_that("gamma_init returns reasonable estimates", {
   init <- gamma_init(x)
 
   expect_named(init, c("alpha", "beta"))
-  expect_equal(init["alpha"], 2, tolerance = 0.2)
-  expect_equal(init["beta"], 1, tolerance = 0.2)
+  expect_equal(init["alpha"], c(alpha=2), tolerance = 0.2)
+  expect_equal(init["beta"], c(beta=1), tolerance = 0.2)
 })
 
 test_that("drule contains correct structure", {

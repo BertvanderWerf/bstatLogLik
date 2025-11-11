@@ -60,7 +60,7 @@ NULL
 #'   and a warning is issued.
 #' @param link_functions List or character vector of link function names.
 #'   If NULL, defaults to 'identity'. Supports character strings or function objects.
-#' @param sep Separator for parameter names in composite parameter lists (default \".\").
+#' @param sep Separator for parameter names in composite parameter lists (default ".").
 #'
 #' @return An S3 object of class \code{parameter_info} with the following structure:
 #'   \item{parameter_values}{Named list of parameter values (expanded by design matrix columns)}
@@ -101,7 +101,7 @@ NULL
 #' info4 <- create_parameter_info(
 #'   parameter_values = c(k = 2, lambda = 10, c = 0),
 #'   formulas = list(k = ~Capital, lambda = ~1, c = ~1),
-#'   link_functions = c(\"log\", \"log\", \"identity\"),
+#'   link_functions = c("log", "log", "identity"),
 #'   model_data = df
 #' )
 #'

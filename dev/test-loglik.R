@@ -17,9 +17,9 @@ pars <- as.list(as.data.frame(do.call(rbind, pars)))
 
 # Prepare parameter info using the distribution's init function
 param_info <- create_parameter_info(
-  parameter_values = pars,
-  estimate_flag = c(k = 1, lambda = 1, c = 0),
-  formulas = list(k = ~0 + f, lambda = ~0+f, c = ~1),
+  parameter_values = pars[1:2],
+  estimate_flag = c(k = 1, lambda = 1),
+  formulas = list(k = ~0 + f, lambda = ~0+f),
 #  link=list(lambda='log'),
   model_data = data
 )
@@ -33,6 +33,8 @@ fit4 <- loglik(
   parameter_info = param_info,
   data = data
 )
+
+s<-summary(fit4)
 
 fit3_k <- loglik(
   fun = weibull_pdf,
@@ -75,11 +77,11 @@ s=summary(fit4)
 library(ggplot2)
 pars <- as.data.frame(parameter_info(fit4))
 ggplot() + geom_point(aes(x=x, y=cy, col=f), data=data) +
-  geom_line(aes(x=x, weibull_cdf(x, pars$k, pars$lambda, pars$c), col=f), data=data)
+  geom_line(aes(x=x, weibull_cdf(x, pars$k, pars$lambda), col=f), data=data)
 
 p1<-predict(fit4, se.fit = TRUE, nr_simulations=250, newfun=weibull_cdf)
 ggplot() + geom_point(aes(x=x, y=cy, col=f), data=data) +
-  geom_line(aes(x=x, weibull_cdf(x, pars$k, pars$lambda, pars$c), col=f), data=data)+
+  geom_line(aes(x=x, weibull_cdf(x, pars$k, pars$lambda), col=f), data=data)+
   geom_line(aes(x=x, y=fitted, col=f), data=cbind(data, p1)) +
   geom_ribbon(aes(x=x, ymin=lower.95, ymax=upper.95, fill=f), data=cbind(data,p1), alpha=0.2)
 
@@ -90,6 +92,68 @@ ggplot() + geom_line(aes(x=x, y=fitted, col=f), data=cbind(data, p)) +
 ph <- predict(fit4, se.fit = TRUE, nr_simulations=250, newfun=weibull_hazard)
 ggplot() + geom_line(aes(x=x, y=fitted, col=f), data=cbind(data, ph)) +
   geom_ribbon(aes(x=x, ymin=lower.95, ymax=upper.95, fill=f), data=cbind(data,ph), alpha=0.2)
+
+set_parameter_values <- function(param_info, newvals, sep=param_info$sep) {
+  if (!inherits(param_info, 'parameter_info')) {
+    stop("The parameter 'param_info' must be a 'parameter_info' class.",
+         call. = FALSE)
+  }
+  if (!is.null(newvals)) {
+    bstatErr::check_numeric_vector(newvals, allow_null = TRUE)
+    if (is.null(names(newvals)) || any(names(newvals)=='')) {
+      stop('newvals must be a named vector with names corresponding to full parameter names',
+           call. = FALSE)
+    }
+    for (i in seq_len(length(newvals))) {
+      full_name <- names(newvals)[i]
+      parname <- strsplit(full_name, sep, fixed=TRUE)[[1]][1]
+      subname <- sub(paste0('^', parname, sep), '', full_name)
+      set <- FALSE
+      if (parname %in% names(param_info$parameter_values)) {
+        if (subname %in% names(param_info$parameter_values[[parname]])){
+          param_info$parameter_values[[parname]][[subname]] <- newvals[i]
+          set <- TRUE
+        }
+      }
+      if (!set) {
+        stop(sprintf('paraminfo$%s$%s does not exist', parname, subname),
+             call. = FALSE)
+      }
+    }
+  }
+  param_info
+}
+
+
+param_info <- set_parameter_values(param_info, newvals=unlist(design[3,1:4]))
+param_info
+
+
+param_info <- parameter_info(fit4)
+design <- as.data.frame(create_parameter_design(param_info))
+design <- design[,names(design) != 'point_type']
+f <- sapply(names(design), function(x) strsplit(x, param_info$sep, fixed=TRUE)[[1]][1])
+for (i in 1:ncol(design)) {
+  names(design)[i] <- sub(paste0("^", f[i], param_info$sep), '', names(design[i]))
+}
+logliks <- c()
+for (i in 1:nrow(design)) {
+  param_info$parameter_values <- split(unlist(design[i,]), f)
+  l <- loglik(weibull_pdf, c(x='x'), param_info, data=param_info$data, trace=FALSE, control=loglik_control(nsteps=0))
+  logliks[i] <- logLik(l)
+}
+
+design <- as.data.frame(create_parameter_design(param_info))
+design <- cbind(design, logliks)
+design <- design[!is.na(design$logliks),]
+design <- design[is.finite(design$logliks),]
+
+model <- expand.grid(names(design)[1:4], names(design)[1:4])
+f <- as.formula(paste0('logliks ~ ',paste(do.call(paste, c(model, sep=' * ')), collapse=' + ')))
+
+fit <- lm(f, data=design)
+summary(fit)
+
 
 
 # -------------------------------------------------------------------------

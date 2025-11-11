@@ -34,7 +34,7 @@ NULL
 #' @export
 weibull_pdf <- function(x, k, lambda, c = 0) {
   # Weibull PDF with shape k, scale lambda, and location c
-  (k / lambda) * ((x + c) / lambda)^(k - 1) * exp(-((x + c) / lambda)^k)
+  ifelse(x+c<0, 0, (k / lambda) * ((x + c) / lambda)^(k - 1) * exp(-((x + c) / lambda)^k))
 }
 
 #' Weibull Cumulative Distribution Function
@@ -56,7 +56,7 @@ weibull_pdf <- function(x, k, lambda, c = 0) {
 #' @export
 weibull_cdf <- function(x, k, lambda, c = 0) {
   # Weibull CDF with shape k, scale lambda, and location c
-  1 - exp(-((x + c) / lambda)^k)
+  ifelse(x+c<0, 0, 1 - exp(-((x + c) / lambda)^k))
 }
 
 #' Weibull Hazard Function

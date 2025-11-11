@@ -31,7 +31,7 @@ NULL
 #' @export
 lognormal_pdf <- function(x, mu, sigma) {
   # Log-Normal PDF
-  (1 / (x * sigma * sqrt(2 * pi))) * exp(-0.5 * ((log(x) - mu) / sigma)^2)
+  ifelse(x<=0, 0, (1 / (x * sigma * sqrt(2 * pi))) * exp(-0.5 * ((log(x) - mu) / sigma)^2))
   #result <- ifelse(x <= 0, 0, result)
   #result
 }
@@ -56,7 +56,7 @@ lognormal_pdf <- function(x, mu, sigma) {
 #' @export
 lognormal_cdf <- function(x, mu, sigma) {
   # Use built-in plnorm
-  plnorm(x, meanlog = mu, sdlog = sigma)
+  ifelse(x<=0, 0, plnorm(x, meanlog = mu, sdlog = sigma))
 }
 
 #' Log-Normal Quantile Function
