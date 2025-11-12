@@ -123,7 +123,7 @@ NULL
 #' }
 #'
 #' @export
-loglik <- function(fun, fun_vars=NULL, parameter_info, data, trace = TRUE,
+loglik <- function(fun, fun_vars=NULL, parameter_info, data=NULL, trace = TRUE,
                    control = loglik_control(), n = NULL) {
 
   result <- list()
@@ -319,7 +319,7 @@ loglik <- function(fun, fun_vars=NULL, parameter_info, data, trace = TRUE,
   # add default values for parameters added 11-11-2025
   fun_args <- formals(args(fun))
   has_value <- !sapply(fun_args, rlang::is_missing)
-  if (any(has_default)) {
+  if (any(has_value)) {
     for (i in seq_len(length(has_value))) {
       if (has_value[i]) {
         assign(names(has_value)[i],

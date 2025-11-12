@@ -8,7 +8,7 @@ loglik(
   fun,
   fun_vars = NULL,
   parameter_info,
-  data,
+  data = NULL,
   trace = TRUE,
   control = loglik_control(),
   n = NULL

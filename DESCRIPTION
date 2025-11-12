@@ -1,6 +1,6 @@
 Package: bstatLogLik
 Title: A package for computing likelihood statistics
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: 
     person("Bert", "van der Werf", email="bert.vanderwerf@auckland.ac.nz", role = c("aut", "cre"), comment=c(ORCID = "0000-0003-3072-5937") )
 Description: What the package does (one paragraph).
